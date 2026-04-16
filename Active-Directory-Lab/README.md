@@ -1,5 +1,58 @@
-tralized security and workstation administration within a Windows domain environment. Configured password complexity requirements to enforce security standards.  
+# Active Directory and Network Lab
 
+## Project Summary
+Deployed a virtualized Windows Server environment to simulate a small business network using Active Directory. Configured centralized authentication, user management, and group policies, and integrated a Windows 10 client into the domain to demonstrate enterprise IT support capabilities.
+
+---
+
+## Objective
+The objective of this project was to gain hands-on experience with Active Directory Domain Services (AD DS), domain-based authentication, and centralized system administration within a Windows-based enterprise environment.
+
+---
+
+## Environment
+- Host OS: Ubuntu Linux  
+- Virtualization: QEMU/KVM (virt-manager)  
+- Server: Windows Server 2022 Standard (Desktop Experience)  
+- Client: Windows 10  
+- RAM Allocation: 4GB per VM  
+- Network: Virtual NAT network  
+
+---
+
+## Network Design
+- `DC-01` (Windows Server 2022) acts as:
+  - Domain Controller  
+  - DNS Server  
+- `WS-01` (Windows 10) acts as:
+  - Domain client workstation  
+- Client machine configured to use domain controller for DNS resolution  
+- All communication occurs within a virtualized internal network  
+
+---
+
+## Domain Controller Setup
+Installed Active Directory Domain Services and promoted the server to a domain controller by creating a new forest named `corp.local`. DNS services were installed alongside AD DS to enable domain name resolution and authentication.
+
+---
+
+## User and Group Management  
+Created multiple user accounts in Active Directory Users and Computers to simulate a small business environment and demonstrate centralized user management through Active Directory.  
+
+---
+
+## Client Domain Join  
+Configured the Windows 10 client to use the domain controller as its DNS server and successfully joined it to the `corp.local` domain using domain administrator credentials.  
+
+---
+
+## Group Policy Implementation  
+Applied basic Group Policy settings to simulate centralized security and workstation administration within a Windows domain environment. Configured password complexity requirements to enforce security standards.  
+
+---
+
+## Network Validation  
+Validated communication between the client and the domain controller using ping and authentication checks, confirming successful DNS resolution, network connectivity, and domain-based sign-in.
 ---
 
 ## Network Validation  
