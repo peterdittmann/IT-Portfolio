@@ -23,6 +23,23 @@ The goal of this project was to simulate real-world IT support scenarios and dem
 
 ---
 
+**Key Issues Resolved:**
+
+- DNS resolution failure (IP working, hostname failing)
+- NTFS permission issues blocking access
+- Print spooler service failure
+- Network connectivity validation
+
+---
+
+**Tools Used:**
+
+- Command Prompt (ping, ipconfig)
+- services.msc
+- File Explorer (permissions)
+
+---
+
 ## Troubleshooting Methodology
 
 Each issue was approached using a structured troubleshooting process:
