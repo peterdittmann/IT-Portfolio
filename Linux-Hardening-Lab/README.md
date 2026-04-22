@@ -23,6 +23,23 @@ The objective of this project was to gain practical experience in securing a Lin
 
 ---
 
+## Key Tasks Performed:
+
+- Configured SSH access securely
+- Disabled insecure login methods
+- Implemented firewall rules (UFW)
+- Managed user privileges and sudo access
+
+---
+
+## Tools Used:
+
+- Bash terminal
+- SSH
+- UFW
+  
+---
+
 ## Initial System State
 
 Captured baseline system configuration prior to applying hardening measures, including system identity, kernel version, and active user context.
