@@ -7,11 +7,15 @@ Deployed and secured a containerized web application on a Linux host using Docke
 
 This setup mirrors a production-style deployment where service availability, secure access, and data persistence must be maintained without exposing internal infrastructure.
 
+---
+
 ## Objective
 
 The goal of this project was to deploy and maintain a self-hosted web application in a Linux environment, provide secure remote access without traditional port forwarding, and ensure the application remained reliable through persistent storage and automatic restart behavior.
 
 This project was also used to demonstrate practical entry-level IT skills in Linux administration, Docker, networking, access control, troubleshooting, and documentation.
+
+---
 
 ## Environment
 
@@ -23,6 +27,24 @@ This project was also used to demonstrate practical entry-level IT skills in Lin
 - **Authentication:** Cloudflare Access
 - **Data Storage Path:** `/mnt/ssd-storage/foundry/data`
 - **Container Data Path:** `/data`
+
+---
+
+## Key Tasks Performed:
+
+- Deployed containerized application
+- Configured persistent storage (bind mounts)
+- Exposed service securely via Cloudflare Tunnel
+- Verified uptime and service availability
+
+---
+
+## Tools Used:
+
+- Docker
+- Cloudflare Tunnel
+
+---
 
 ## Architecture Overview
 
