@@ -23,7 +23,7 @@ The goal of this project was to simulate real-world IT support scenarios and dem
 
 ---
 
-**Key Issues Resolved:**
+## Key Issues Resolved:
 
 - DNS resolution failure (IP working, hostname failing)
 - NTFS permission issues blocking access
@@ -32,7 +32,7 @@ The goal of this project was to simulate real-world IT support scenarios and dem
 
 ---
 
-**Tools Used:**
+## Tools Used:
 
 - Command Prompt (ping, ipconfig)
 - services.msc
