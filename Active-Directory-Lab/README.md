@@ -16,7 +16,24 @@ The objective of this project was to gain hands-on experience with Active Direct
 - Server: Windows Server 2022 Standard (Desktop Experience)  
 - Client: Windows 10  
 - RAM Allocation: 4GB per VM  
-- Network: Virtual NAT network  
+- Network: Virtual NAT network
+
+---
+
+## Key Tasks Performed:
+
+- Installed and configured domain controller
+- Created users and groups
+- Applied Group Policy Objects
+- Simulated enterprise user management
+
+---
+
+## Tools Used:
+
+- Windows Server
+- Active Directory Users & Computers
+- Group Policy Management
 
 ---
 
