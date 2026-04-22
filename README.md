@@ -4,7 +4,7 @@
 Entry-level IT Support candidate with CompTIA A+ and hands-on experience building practical labs in Windows support, Active Directory, Linux hardening, troubleshooting, and secure application hosting.
 
 ## What This Portfolio Demonstrates
-This portfolio showcases hands-on experience simulating real-world IT environments and support scenarios, including:
+Hands-on IT Support lab demonstrating real-world troubleshooting across Windows and Linux environments.
 
 - Enterprise user and domain management (Active Directory)
 - System hardening and security practices (Linux)
@@ -14,18 +14,20 @@ This portfolio showcases hands-on experience simulating real-world IT environmen
 ## Tools & Technologies
 - Windows Server 2022
 - Windows 10
-- Active Directory
+- Active Directory (concepts)
 - Linux (Ubuntu)
 - Docker
 - Cloudflare Tunnel
 - UFW Firewall
 - GitHub
 - QEMU/KVM (virt-manager)
+- Command Line (CMD / Bash)
+- Networking (DNS, IP, ICMP)
 
 ## Projects
 
 ### Active Directory Lab
-Simulated a small business Windows domain environment using Windows Server and Windows 10.
+Configured a small business Windows domain environment using Windows Server and Windows 10.
 
 [View Project](./Active-Directory-Lab)
 
@@ -45,7 +47,7 @@ Deployed a containerized application with secure remote access, persistent stora
 [View Project](./Secure-Hosting-Docker)
 
 ### IT Support Lab
-Simulated common help desk tasks including password resets, permissions, shared folders, and printer troubleshooting.
+Diagnosed common help desk tasks including password resets, permissions, shared folders, and printer troubleshooting.
 
 [View Project](./IT-Support-Lab)
 
