@@ -2,7 +2,7 @@
 
 ## Project Summary
 
-Hands-on IT Support lab demonstrating real-world troubleshooting across Windows and Linux environments. Demonstrated a structured troubleshooting methodology to diagnose issues, apply targeted fixes, and verify successful resolution.
+Hands-on IT Support lab demonstrating real-world troubleshooting across Windows environments. Demonstrated a structured troubleshooting methodology to diagnose issues, apply targeted fixes, and verify successful resolution.
 
 ## Objective
 
@@ -17,26 +17,6 @@ This project was designed to simulate real help desk tasks and demonstrate the a
 - **Guest OS:** Windows 10/11
 - **Machine Name:** Win10
 - **User Types:** Administrator and Standard Users
-
-##  Key Scenarios
-
-- Resolved NTFS permission issues and restored user access
-- Diagnosed DNS failures (IP connectivity vs hostname resolution)
-- Restarted and validated Windows services (Print Spooler)
-- Configured Linux users and sudo permissions
-- Deployed Docker container with secure remote access (Cloudflare Tunnel)
-- Implemented firewall rules using UFW
-
-##  Tools & Technologies
-
-- Windows 10 / Windows Server
-- Linux (Ubuntu)
-- Active Directory (concepts)
-- Command Line (CMD / Bash)
-- Networking (DNS, IP, ICMP)
-- Docker
-- Cloudflare Tunnel
-- UFW Firewall
 
 ## Lab Overview
 
