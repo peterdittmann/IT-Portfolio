@@ -178,9 +178,22 @@ The first upgrade will be:
 
 After installing the additional RAM, I will confirm that all 16 GB is detected and test the memory before moving on.
 
-An SSD is still planned, but I am not treating it as urgent enough to justify overpaying for one.
+### Storage Upgrade Decision
 
-Longer term, I expect the storage layout to separate the hypervisor/VM storage from important household data rather than trying to make the existing 500 GB HDD handle everything.
+I initially planned to replace the existing 500 GB HDD with a SATA SSD before deploying the server.
+
+While researching 500 GB and 1 TB SATA drives, I found that current SSD pricing was considerably higher than I expected. Rather than spending heavily on storage for an older platform, I decided to keep the existing HDD for the initial build.
+
+For the first stage of the project, the HDD is sufficient for installing Proxmox, learning the platform, and running lightweight services. VM and container storage performance will be slower than it would be on an SSD, but this does not prevent me from building and testing the environment.
+
+The SSD upgrade has therefore been deferred rather than cancelled. I will revisit it when I find a reasonably priced SATA SSD.
+
+This keeps the initial investment focused on the current bottleneck:
+
+- Memory upgrade: 8 GB → 16 GB
+- Existing 500 GB HDD: retained for initial deployment
+- SATA SSD: deferred
+- Dedicated NAS/backup drives: future upgrade
 
 ## Intended Use
 
