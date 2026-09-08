@@ -162,7 +162,7 @@ The NVIDIA T1000 occupies the primary PCIe slot, with additional expansion avail
 
 The existing Seagate HDD is mounted in Lenovo's drive assembly.
 
-![Lenovo drive cage](images/lenovo-drive-cage.png)
+![Lenovo drive cage](images/lenovo-drive-cage.jpg)
 
 There is enough flexibility in the chassis to continue investigating an SSD and additional storage, but I decided not to buy storage immediately.
 
