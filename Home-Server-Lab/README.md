@@ -1,4 +1,4 @@
-# 🖥️ Home Server & Virtualization Lab
+# Home Server & Virtualization Lab
 
 > Repurposing an older Lenovo business desktop into a home infrastructure server and virtualization lab through hardware troubleshooting, system assessment, upgrades, and eventually Proxmox VE.
 
