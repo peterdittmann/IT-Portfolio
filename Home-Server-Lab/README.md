@@ -215,15 +215,17 @@ The exact design will be documented once I actually deploy it rather than design
 ## Next Steps
 
 - [ ] Install additional 8 GB DDR3 memory
-- [ ] Confirm 16 GB is detected
-- [ ] Run memory testing
+- [ ] Confirm 16 GB is detected in UEFI and the operating system
+- [ ] Run a memory test to verify stability
 - [ ] Enable Intel virtualization in UEFI
-- [ ] Perform additional health testing on the existing HDD
-- [ ] Source a reasonably priced SATA SSD
-- [ ] Install Proxmox VE
-- [ ] Configure management networking
-- [ ] Deploy first VM or LXC container
-- [ ] Configure backups
+- [ ] Check SMART data and overall health of the existing 500 GB HDD
+- [ ] Back up any existing data that needs to be retained
+- [ ] Install Proxmox VE on the existing HDD
+- [ ] Configure Proxmox management networking
+- [ ] Apply system updates and verify remote access to the Proxmox web interface
+- [ ] Deploy and configure the first LXC container
+- [ ] Configure a basic backup process
+- [ ] Add a SATA SSD when a reasonably priced drive is available
 
 ## Project Log
 
