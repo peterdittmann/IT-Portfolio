@@ -1,64 +1,99 @@
 # IT Support Portfolio – Peter Dittmann
 
 ## About Me
-Entry-level IT Support candidate with CompTIA A+ and hands-on experience building practical labs in Windows support, Active Directory, Linux hardening, troubleshooting, and secure application hosting.
 
-## What This Portfolio Demonstrates
-Hands-on IT Support lab demonstrating real-world troubleshooting across Windows and Linux environments.
+Entry-level IT Support candidate with CompTIA A+ and hands-on experience building practical labs in Windows support, Active Directory, Linux administration, hardware troubleshooting, networking, virtualization, and secure application hosting.
 
-- Enterprise user and domain management (Active Directory)
-- System hardening and security practices (Linux)
-- Structured troubleshooting and issue resolution
-- Secure application deployment and remote access
-
-## Tools & Technologies
-- Windows Server 2022
-- Windows 10
-- Active Directory (concepts)
-- Linux (Ubuntu)
-- Docker
-- Cloudflare Tunnel
-- UFW Firewall
-- GitHub
-- QEMU/KVM (virt-manager)
-- Command Line (CMD / Bash)
-- Networking (DNS, IP, ICMP)
+This portfolio documents systems I have built, configured, troubleshot, and maintained while developing practical IT support skills.
 
 ## Projects
 
 ### Active Directory Lab
-Configured a small business Windows domain environment using Windows Server and Windows 10.
+Built a small Windows domain environment using Windows Server 2022 and a Windows client to practice user and group administration, permissions, Group Policy, and common support tasks.
 
-[View Project](./Active-Directory-Lab)
+[View Active Directory Lab](./Active-Directory-Lab)
 
-### Linux Hardening Lab
-Secured an Ubuntu Linux system using user hardening, SSH configuration, firewall rules, and service reduction.
+### Home Server Lab
+Repurposing an older Lenovo workstation into a home server and virtualization lab. Initial work included troubleshooting a no-display issue, hardware inspection, PowerShell-based hardware inventory, storage assessment, and planning a low-cost upgrade path for Proxmox.
 
-[View Project](./Linux-Hardening-Lab)
+**Current hardware:** Intel i5-4570 · 8 GB DDR3 · 500 GB HDD · NVIDIA T1000  
+**Current status:** Hardware assessment complete; memory upgrade planned.
 
-### Troubleshooting Playbook
-Documented common IT support scenarios involving DNS, permissions, services, and performance issues.
-
-[View Project](./Troubleshooting-Playbook)
+[View Home Server Lab](./Home-Server-Lab)
 
 ### Secure Hosting with Docker & Cloudflare
-Deployed a containerized application with secure remote access, persistent storage, and restart validation.
+Deployed a containerized application on Ubuntu with persistent storage and secure remote access through Cloudflare Tunnel. Tested container recovery and remote connectivity.
 
-[View Project](./Secure-Hosting-Docker)
+[View Secure Hosting Lab](./Secure-Hosting-Docker)
+
+### Linux Hardening Lab
+Secured an Ubuntu Linux system using account hardening, SSH configuration, firewall rules, and service reduction.
+
+[View Linux Hardening Lab](./Linux-Hardening-Lab)
 
 ### IT Support Lab
-Diagnosed common help desk tasks including password resets, permissions, shared folders, and printer troubleshooting.
+Worked through common help desk tasks including password resets, permissions, shared folders, printer troubleshooting, and user support scenarios.
 
-[View Project](./IT-Support-Lab)
+[View IT Support Lab](./IT-Support-Lab)
 
-## Skills Demonstrated
-- Windows Administration
-- Linux Administration
+### Troubleshooting Playbook
+Documented troubleshooting approaches for common support issues involving DNS, permissions, Windows services, connectivity, and system performance.
+
+[View Troubleshooting Playbook](./Troubleshooting-Playbook)
+
+## Tools & Technologies
+
+**Windows**
+- Windows 10
+- Windows Server 2022
 - Active Directory
-- Networking Fundamentals
-- Troubleshooting
-- Security Hardening
-- Docker and Remote Access
+- PowerShell
+- CMD
+
+**Linux & Virtualization**
+- Ubuntu Linux
+- QEMU/KVM
+- virt-manager
+- Docker
+- Proxmox VE *(planned)*
+
+**Networking & Remote Access**
+- DNS
+- DHCP
+- TCP/IP
+- ICMP
+- Cloudflare Tunnel
+- UFW Firewall
+
+**Support & Administration**
+- Hardware troubleshooting
+- User and group administration
+- File and NTFS permissions
+- System and service troubleshooting
+- Technical documentation
+- Git/GitHub
+
+## Current Lab Work
+
+I am currently developing the **Home Server Lab**, starting with an older Lenovo workstation and documenting the project from initial troubleshooting through hardware upgrades and eventual virtualization deployment.
+
+Current next steps:
+
+- Upgrade memory from 8 GB to 16 GB
+- Validate the new memory
+- Enable hardware virtualization in UEFI
+- Source a SATA SSD
+- Install Proxmox VE
+- Begin deploying Linux and Windows lab environments
+
+Progress and troubleshooting notes are documented in the project README:
+
+[Follow the Home Server Build](./Home-Server-Lab)
+
+## Certifications
+
+- CompTIA A+
 
 ## Goal
-Currently seeking an entry-level IT Support or Help Desk role in Calgary.
+
+Currently seeking an entry-level IT Support, Help Desk, or Desktop Support position in Calgary where I can continue developing hands-on experience with Microsoft environments, endpoint support, networking, and infrastructure.
