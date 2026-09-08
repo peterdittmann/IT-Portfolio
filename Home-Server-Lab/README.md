@@ -1,728 +1,239 @@
-# Home Server & Virtualization Lab
+# Lenovo Home Server Lab
 
-> Repurposing an older Lenovo business desktop into a home infrastructure server and virtualization lab through hardware troubleshooting, system assessment, upgrades, and eventually Proxmox VE.
+I was given an older Lenovo desktop and wanted to determine whether it was worth repurposing as a home server and virtualization lab rather than leaving it unused.
 
-![Project Status](https://img.shields.io/badge/Status-In%20Progress-yellow)
-![Platform](https://img.shields.io/badge/Platform-Lenovo%20ThinkCentre-blue)
-![OS](https://img.shields.io/badge/Current%20OS-Windows%2010-blue)
-![Hypervisor](https://img.shields.io/badge/Proxmox-Planned-orange)
+The machine initially powered on but produced no display. After troubleshooting that issue, I used Windows tools and PowerShell to inventory the hardware, opened the system to inspect its expansion options, and developed a low-cost upgrade plan.
 
----
+My current goal is to use the machine as a Proxmox host for learning virtualization and running a few useful home network services.
 
-## Project Overview
+This repository documents the project as I work through it.
 
-This project began with an older Lenovo business desktop that powered on but produced no display output.
-
-Rather than replacing or discarding the system, I diagnosed the initial fault, restored video output, inventoried the hardware using Windows administration tools and PowerShell, physically inspected the system, and evaluated its suitability for reuse.
-
-The long-term objective is to convert the computer into a **Proxmox-based home server and virtualization lab** capable of supporting both household infrastructure and isolated IT lab environments.
-
-Planned services include:
-
-- Network-wide DNS filtering
-- Centralized file storage
-- Automated backups
-- Linux servers and containers
-- Windows Server lab environments
-- Monitoring
-- Virtual networking
-- Future media services
-
-This README documents the project from the original troubleshooting incident through deployment.
-
----
-
-## Objectives
-
-- Diagnose and resolve the initial no-display condition
-- Establish an accurate hardware inventory
-- Assess the condition and expandability of the system
-- Determine whether upgrading the hardware is economically worthwhile
-- Increase memory for virtualization workloads
-- Enable hardware virtualization
-- Deploy Proxmox VE
-- Build isolated Linux and Windows environments
-- Implement useful household network services
-- Configure centralized storage and backups
-- Document configuration, troubleshooting, testing, and recovery
-
----
-
-## Project Status
-
-| Phase | Description | Status |
-|---|---|:---:|
-| 1 | Initial troubleshooting | ✅ Complete |
-| 2 | Hardware inventory | ✅ Complete |
-| 3 | Physical inspection | ✅ Complete |
-| 4 | Upgrade assessment | ✅ Complete |
-| 5 | RAM upgrade and validation | 🟡 Planned |
-| 6 | Virtualization configuration | 🟡 Planned |
-| 7 | Proxmox VE deployment | ⚪ Planned |
-| 8 | DNS filtering | ⚪ Planned |
-| 9 | File storage / NAS services | ⚪ Planned |
-| 10 | Automated backups | ⚪ Planned |
-| 11 | Windows/Linux virtual lab | ⚪ Planned |
-| 12 | Monitoring and documentation | ⚪ Planned |
-
----
-
-# Phase 1 — Initial Troubleshooting
-
-## Initial Problem
-
-The system powered on but displayed **No Signal** on the connected monitor.
-
-Observed symptoms included:
-
-- Power LED remained illuminated
-- System fans were operating
-- USB keyboard received power
-- No display output
-- No obvious POST beep codes
-- Monitor reported `No Signal`
-
-The monitor was initially connected to a DisplayPort output on the motherboard.
-
-### Troubleshooting Approach
-
-Rather than immediately assuming a failed motherboard, RAM, CPU, or power supply, I inspected the system for additional display hardware.
-
-Physical inspection revealed an installed discrete NVIDIA graphics adapter with Mini DisplayPort outputs.
-
-I connected the monitor directly to the discrete graphics adapter using a Mini DisplayPort-to-DisplayPort connection.
-
-### Result
-
-**Video output was immediately restored and the system successfully booted into Windows.**
-
-### Root Cause
-
-The computer was operational and successfully POSTing.
-
-The display was connected to a motherboard video output that was not providing the system's active display signal while the discrete graphics adapter was installed.
-
-### Resolution
-
-Moved the monitor connection from the motherboard DisplayPort output to the discrete GPU.
-
-### Troubleshooting Takeaway
-
-The initial symptom suggested a potentially serious hardware failure, but confirming power state and inspecting the complete hardware configuration allowed the problem to be isolated without unnecessarily replacing components.
-
----
-
-# Phase 2 — Hardware Inventory
-
-After restoring access to Windows, I established a baseline inventory before making upgrade decisions.
-
-I used:
-
-- Windows System Information (`msinfo32`)
-- Disk Management (`diskmgmt.msc`)
-- PowerShell / CIM
-- Physical inspection
-
-## Initial Configuration
+## Starting Hardware
 
 | Component | Configuration |
-|---|---|
-| Manufacturer | Lenovo |
-| Machine Type | 10A8 |
-| Processor | Intel Core i5-4570 @ 3.20 GHz |
-| CPU Cores / Threads | 4 / 4 |
+| --- | --- |
+| System | Lenovo 10A8S00200 |
+| CPU | Intel Core i5-4570 @ 3.20 GHz |
+| CPU configuration | 4 cores / 4 logical processors |
 | Memory | 8 GB DDR3-1600 |
-| Memory Configuration | 2 × 4 GB Hynix |
-| Primary Storage | 500 GB Seagate HDD |
-| Disk Model | ST500DM002-1SB10A |
-| Graphics | Discrete NVIDIA graphics adapter |
+| Memory configuration | 2 x 4 GB Hynix |
+| Storage | 500 GB Seagate HDD |
+| Drive model | ST500DM002-1SB10A |
+| GPU | NVIDIA T1000 |
 | Firmware | UEFI |
-| Operating System | Windows 10 Pro |
-| Windows Build | 19045 |
+| Operating system | Windows 10 Pro, Build 19045 |
 
----
+## Initial Troubleshooting
 
-## Windows System Information
+### No display output
 
-Windows System Information was used to verify the CPU, installed memory, firmware configuration, operating system, and virtualization capabilities.
+When I first powered on the machine, the fans started, the power LED remained on, and the keyboard received power, but the monitor reported `No Signal`.
+
+The monitor was connected by DisplayPort to the motherboard.
+
+Since the machine appeared to be powering up normally, I inspected the system for another possible display output before assuming there was a larger hardware problem.
+
+Opening the chassis revealed an NVIDIA T1000 discrete graphics card. The card uses Mini DisplayPort outputs, so I connected the monitor directly to the T1000 using a Mini DisplayPort-to-DisplayPort cable.
+
+Video output returned immediately and the system booted normally.
+
+**Cause:** The display was connected to the motherboard video output rather than the installed discrete GPU.
+
+**Resolution:** Connected the monitor directly to the NVIDIA T1000.
+
+![NVIDIA T1000 and motherboard](images/lenovo-motherboard.jpg)
+
+This was a useful reminder not to jump from "no display" directly to failed RAM, motherboard, CPU, or power supply. The other signs of life suggested the machine might already be completing POST, so checking the available display hardware was a low-risk place to start.
+
+## System Inventory
+
+Once I had access to Windows, I wanted to establish exactly what hardware I was working with before buying anything.
+
+I started with Windows System Information (`msinfo32`).
 
 ![Windows System Information](images/system-information.png)
 
-The CPU supports hardware virtualization features; however, the initial system configuration indicated that virtualization was not currently enabled in firmware.
+This confirmed:
 
-This will be addressed before deploying the hypervisor.
+- Intel Core i5-4570
+- 8 GB installed RAM
+- UEFI firmware
+- Windows 10 Pro
+- Lenovo 10A8 platform
 
----
-
-# Phase 3 — Storage Assessment
-
-## Disk Management
-
-Windows Disk Management showed a single approximately 500 GB physical disk.
-
-![Windows Disk Management](images/disk-management.png)
-
-The existing disk contained:
-
-- EFI System Partition
-- Main Windows NTFS partition
-- Recovery partition
-
-No secondary storage drive was detected.
-
-This confirmed that additional storage will eventually be required if the machine is used for centralized household storage or backups.
-
----
-
-## PowerShell Storage Discovery
-
-I queried the installed physical storage using PowerShell:
-
-```powershell
-Get-PhysicalDisk
-```
-
-The installed drive was identified as:
+The CPU reports the required virtualization extensions, but System Information showed:
 
 ```text
-Model: ST500DM002-1SB10A
-Media Type: HDD
-Capacity: ~465.76 GB
-Operational Status: OK
-Health Status: Healthy
+Virtualization Enabled in Firmware: No
 ```
 
-I also queried the Windows disk inventory:
+I therefore need to enable hardware virtualization in UEFI before using the system as a virtualization host.
 
-```powershell
-Get-CimInstance Win32_DiskDrive |
-    Select-Object Model, Size, Status
-```
+## Memory Investigation
 
-This independently confirmed the installed Seagate HDD.
+I wanted the exact specifications of the existing memory before deciding what to purchase.
 
-> **Important:** A Windows `Healthy` or `OK` status is an initial health indicator, not a backup strategy or guarantee of disk reliability.
-
-Because this is an older mechanical disk, I do not plan to make it the sole storage location for important household data.
-
----
-
-# Phase 4 — Memory Assessment
-
-PowerShell was used to identify the installed DIMMs rather than relying solely on physical inspection.
+I queried the installed DIMMs with PowerShell:
 
 ```powershell
 Get-CimInstance Win32_PhysicalMemory |
     Select-Object DeviceLocator, Manufacturer, PartNumber, Capacity, Speed
 ```
 
-The query identified:
+The system returned two Hynix modules:
 
 ```text
-Manufacturer: Hynix
-Part Number: HMT451U6AFR8C-PB
-Capacity: 4 GB per module
-Speed: 1600 MHz
+Manufacturer : Hynix/Hyundai
+PartNumber   : HMT451U6AFR8C-PB
+Capacity     : 4294967296
+Speed        : 1600
 ```
 
-Current configuration:
+Each module is 4 GB, giving the system its current 8 GB total.
+
+![PowerShell memory and disk inventory](images/powershell-hardware-inventory.png)
+
+Physical inspection showed four DIMM slots, with two currently populated.
+
+![Internal system overview](images/lenovo-internal-overview.jpg)
+
+For the first upgrade, I decided to add another 2 x 4 GB DDR3-1600 kit rather than replacing the existing memory.
+
+That will bring the machine to:
 
 ```text
-2 × 4 GB DDR3-1600
-8 GB Total
+Current:  8 GB
+Planned: 16 GB
 ```
 
-![PowerShell Hardware Inventory](images/powershell-hardware-inventory.png)
+Sixteen gigabytes should give me considerably more room for lightweight virtual machines and containers while keeping the amount invested in this older platform low.
 
-Physical inspection confirmed additional DIMM slots are available.
+## Storage Investigation
 
-### Planned Upgrade
+Disk Management showed one physical disk with approximately 465 GB of usable capacity.
 
-The first hardware upgrade will increase the system from:
+![Windows Disk Management](images/disk-management.png)
+
+The disk contains the existing Windows installation with:
+
+- 100 MB EFI System Partition
+- approximately 465 GB NTFS Windows partition
+- 548 MB Recovery partition
+
+I then queried the physical disk from PowerShell:
+
+```powershell
+Get-CimInstance Win32_DiskDrive |
+    Select-Object Model, Size, Status
+```
+
+The installed drive was identified as:
 
 ```text
-8 GB  →  16 GB
+Model  : ST500DM002-1SB10A
+Size   : 500105249280
+Status : OK
 ```
 
-using an additional compatible **2 × 4 GB DDR3/DDR3L-1600 UDIMM kit**.
+This is a 500 GB Seagate mechanical hard drive.
 
-This provides additional virtualization capacity while keeping the initial investment in the older platform low.
+The drive currently reports an OK status, but because it is an older HDD I don't intend to rely on it as the only location for important household data.
 
----
+## Physical Inspection
 
-# Phase 5 — Physical Hardware Inspection
+After shutting the machine down and disconnecting power, I opened the chassis to see what expansion options were available.
 
-Before purchasing upgrades, I shut down the system, disconnected power, opened the chassis, and inspected the internal configuration.
+![Internal system overview](images/lenovo-internal-overview.jpg)
 
-## System Overview
+I was specifically looking for:
 
-![Lenovo Internal Overview](images/lenovo-internal-overview.jpg)
-
-The inspection included:
-
-- Memory modules and available DIMM slots
-- SATA storage
-- Drive mounting system
+- available memory slots
+- storage mounting locations
+- SATA connections
 - PCIe expansion
-- Graphics adapter
-- Internal cabling
-- Cooling
-- Available physical expansion space
+- existing cabling
+- general condition of the machine
 
----
+The system has four DIMM slots with two currently occupied, which makes the planned memory upgrade straightforward.
 
-## Drive Cage and Storage
+The NVIDIA T1000 occupies the primary PCIe slot, with additional expansion available below it.
 
-![Lenovo Drive Cage](images/lenovo-drive-cage.jpg)
+### Drive cage
 
-The system uses Lenovo's tool-less drive mounting system.
+The existing Seagate HDD is mounted in Lenovo's drive assembly.
 
-The existing Seagate 500 GB HDD is installed in the drive assembly.
+![Lenovo drive cage](images/lenovo-drive-cage.png)
 
-The chassis was inspected to determine the feasibility of adding:
+There is enough flexibility in the chassis to continue investigating an SSD and additional storage, but I decided not to buy storage immediately.
 
-- A 2.5-inch SATA SSD
-- Additional mechanical storage
-- Potential future storage-controller expansion
+I looked at several SATA SSD options during the assessment, but the prices I found did not make sense relative to the age and value of the machine. For now, I would rather upgrade the inexpensive DDR3 memory, continue testing the computer, and add an SSD when I find a reasonable option.
 
-No additional storage hardware has been purchased yet.
+## Current Upgrade Plan
 
----
+My approach with this machine is to avoid spending money simply because something *can* be upgraded.
 
-## Motherboard and Expansion
+The first upgrade will be:
 
-![Lenovo Motherboard](images/lenovo-motherboard.jpg)
+**8 GB → 16 GB DDR3-1600**
 
-Physical inspection identified:
+After installing the additional RAM, I will confirm that all 16 GB is detected and test the memory before moving on.
 
-- Four DIMM slots
-- Two currently populated memory slots
-- PCIe expansion capacity
-- SATA connectivity
-- Discrete graphics
-- Existing drive and optical-drive connections
+An SSD is still planned, but I am not treating it as urgent enough to justify overpaying for one.
 
-The system also requires routine dust cleaning before being placed into continuous server operation.
+Longer term, I expect the storage layout to separate the hypervisor/VM storage from important household data rather than trying to make the existing 500 GB HDD handle everything.
 
----
+## Intended Use
 
-# Upgrade Strategy
+Assuming the hardware continues to test well, I plan to install Proxmox VE and use this machine as both a home server and an IT lab.
 
-Because this is an older platform, upgrades are being selected according to **actual workload requirements and cost effectiveness**, rather than attempting to maximize every component.
+The first workloads I am considering are:
 
-## Stage 1
-
-**Memory: 8 GB → 16 GB**
-
-Purpose:
-
-- Increase virtualization headroom
-- Allow multiple lightweight VMs/containers
-- Reuse existing functional DDR3 memory
-- Keep initial project cost low
-
-## Stage 2
-
-**Add SATA SSD**
-
-Target:
-
-```text
-500 GB – 1 TB SATA SSD
-```
-
-Intended use:
-
-- Proxmox VE
-- VM/container storage
-- System services
-
-The existing mechanical HDD can then be repurposed for non-critical or temporary storage.
-
-## Stage 3
-
-**Dedicated data storage**
-
-If the server proves useful enough to justify additional investment, dedicated HDDs will be added for:
-
-- Household files
-- PC backups
-- Server backups
-- Application backups
-- Shared storage
-
-Important data will not rely on a single disk.
-
----
-
-# Planned Architecture
-
-The intended architecture is:
-
-```text
-                     HOME NETWORK
-                          │
-                    ┌─────┴─────┐
-                    │   Lenovo  │
-                    │   Server  │
-                    └─────┬─────┘
-                          │
-                     Proxmox VE
-                          │
-        ┌─────────────────┼─────────────────┐
-        │                 │                 │
-   Network Services    File/Backup       Homelab
-        │              Services             │
-   AdGuard Home            │          ┌─────┴─────┐
-        │                  │          │           │
-   DNS Filtering       SMB Shares   Linux      Windows
-                       Backups       VMs/LXC    Server
-```
-
----
-
-# Production vs. Lab Separation
-
-An important design goal is separating useful household services from experimental lab environments.
-
-```text
-PRODUCTION-LIKE SERVICES
-│
-├── DNS filtering
-├── File shares
-├── Backups
-└── Monitoring
-
-
-LAB ENVIRONMENT
-│
-├── Windows Server
-├── Active Directory
-├── Experimental DNS/DHCP
-├── Linux VMs
-├── Docker/services
-└── Networking experiments
-```
-
-This separation will allow experimental systems to be modified, broken, restored, or rebuilt without intentionally making them dependencies for normal household use.
-
----
-
-# Planned Proxmox Environment
-
-The current plan is to install **Proxmox VE** as the bare-metal hypervisor.
-
-Potential workloads include:
-
-```text
-Proxmox VE
-│
-├── LXC
-│   └── AdGuard Home
-│
-├── Linux VM/LXC
-│   ├── SMB file sharing
-│   └── Backup services
-│
-├── Ubuntu/Debian VM
-│   └── Linux administration
-│
-└── Windows Server VM
-    ├── Active Directory
-    ├── DNS
-    └── Windows administration lab
-```
-
-Proxmox will provide practical experience with:
-
-- Hypervisors
-- Virtual machines
-- Linux containers
-- Virtual networking
-- Resource allocation
-- Storage
-- Snapshots
-- Backups
-- Recovery
-- Remote administration
-
----
-
-# Planned Network Services
-
-## AdGuard Home
-
-A future lightweight container is planned for **AdGuard Home**.
-
-The intended DNS path will be:
-
-```text
-Client Device
-      │
-      ▼
-Home Router / DHCP
-      │
-      ▼
-AdGuard Home
-      │
-      ├── Block configured unwanted domains
-      │
-      └── Forward permitted DNS requests
-                    │
-                    ▼
-               Upstream DNS
-```
-
-This will provide hands-on experience with:
-
-- DNS
-- DHCP-provided DNS configuration
-- Name resolution
-- DNS filtering
-- Client troubleshooting
-- Service availability
-- Network dependency planning
-
-This service has **not yet been deployed**.
-
----
-
-# Planned File & Backup Services
-
-Future storage services may include SMB shares for:
-
-```text
-Shared Storage
-│
-├── Household Documents
-├── Photos
-├── PC Backups
-├── Server Backups
-├── Foundry Backups
-└── Lab Resources
-```
-
-The project will distinguish between **storage redundancy** and **actual backups**.
-
-Important data should ultimately have another independent copy rather than relying solely on the server's internal disks.
-
----
-
-# Planned Virtualized IT Lab
-
-The virtualization environment will also provide an isolated Windows administration lab.
-
-A potential topology is:
-
-```text
-                Proxmox
-                   │
-            Virtual Network
-                   │
-       ┌───────────┴───────────┐
-       │                       │
-Windows Server             Windows Client
-       │                       │
-       ├── Active Directory ◄──┤
-       ├── DNS                 │
-       └── Administration      │
-```
-
-This environment will be kept logically separate from household infrastructure wherever practical.
-
----
-
-# Security Considerations
-
-As the project develops, the following principles will be applied:
-
-- Do not expose management interfaces directly to the public internet
-- Use strong administrative credentials
-- Apply least-privilege access where practical
-- Separate administrative and user access
-- Patch host and guest systems
-- Limit unnecessary services
-- Maintain backups of important configuration/data
-- Test restoration procedures
-- Document changes
-- Separate experimental workloads from household services
-
----
-
-# Troubleshooting Methodology
-
-This project follows a structured troubleshooting approach:
-
-```text
-Identify Symptoms
-       ↓
-Determine Scope
-       ↓
-Gather Information
-       ↓
-Form a Hypothesis
-       ↓
-Test Safely
-       ↓
-Evaluate Result
-       ↓
-Implement Resolution
-       ↓
-Verify Functionality
-       ↓
-Document Findings
-```
-
-The original display issue demonstrated the value of isolating the symptom before replacing hardware.
-
----
-
-# Skills Demonstrated
-
-### Completed
-
-- Hardware troubleshooting
-- Root-cause analysis
-- Windows 10 administration
-- Windows System Information
-- Disk Management
-- PowerShell
-- CIM/WMI hardware queries
-- Hardware inventory
-- Storage assessment
-- RAM identification
-- Physical PC inspection
-- UEFI/BIOS assessment
-- Upgrade planning
-- Technical documentation
-- Cost-conscious infrastructure planning
-
-### Planned / In Progress
-
-- Proxmox VE
-- Debian/Linux administration
-- Virtual machines
-- LXC containers
-- Virtual networking
-- DNS administration
-- AdGuard Home
+- AdGuard Home or Pi-hole for local DNS filtering
+- Linux containers and VMs
+- a Windows Server lab
 - SMB file sharing
-- Backup administration
-- Windows Server virtualization
-- Monitoring
-- Service recovery
+- PC/server backups
+- basic monitoring
+
+I want to keep experimental lab systems separate from services that other devices in the house depend on. For example, a Windows Server DNS or Active Directory lab should be something I can break and rebuild without taking down normal household DNS.
+
+The exact design will be documented once I actually deploy it rather than designing the entire environment in advance.
+
+## Next Steps
+
+- [ ] Install additional 8 GB DDR3 memory
+- [ ] Confirm 16 GB is detected
+- [ ] Run memory testing
+- [ ] Enable Intel virtualization in UEFI
+- [ ] Perform additional health testing on the existing HDD
+- [ ] Source a reasonably priced SATA SSD
+- [ ] Install Proxmox VE
+- [ ] Configure management networking
+- [ ] Deploy first VM or LXC container
+- [ ] Configure backups
+
+## Project Log
+
+### September 7, 2026 — Initial Assessment
+
+Received the Lenovo system and performed the initial hardware assessment.
+
+The machine initially appeared to have a no-display problem. I determined that the monitor was connected to the motherboard DisplayPort output while an NVIDIA T1000 was installed. Connecting the display to the T1000 restored video.
+
+Once in Windows, I:
+
+- checked the system configuration with `msinfo32`
+- inspected the existing disk with Disk Management
+- queried installed memory using `Get-CimInstance Win32_PhysicalMemory`
+- queried storage using `Get-CimInstance Win32_DiskDrive`
+- identified two 4 GB Hynix DDR3-1600 DIMMs
+- identified the existing 500 GB Seagate HDD
+- confirmed virtualization support is present but disabled in firmware
+- opened the chassis and inspected the memory, storage, PCIe, and drive layout
+- decided to begin with a low-cost RAM upgrade rather than immediately investing heavily in storage
+
+The next session will be the memory upgrade and virtualization-readiness testing.
 
 ---
 
-# Lessons Learned
-
-### 1. Start with the symptom, not the assumed failure
-
-A computer producing no video does not necessarily mean it has failed to POST. Checking the complete hardware configuration identified an alternative active display adapter and resolved the issue without replacing hardware.
-
-### 2. Verify hardware through multiple sources
-
-I combined physical inspection with Windows System Information, Disk Management, and PowerShell rather than relying on a single source.
-
-### 3. A healthy disk is not a backup
-
-The existing HDD reports a healthy operational state, but important data should not depend on a single aging disk.
-
-### 4. Upgrade according to requirements
-
-The machine does not need to be transformed into a high-performance workstation. The goal is to spend enough to support the intended server workloads without over-investing in an older platform.
-
-### 5. Separate experimentation from services people depend on
-
-Virtualization provides a way to maintain useful household services while still allowing lab environments to be freely changed, broken, restored, and rebuilt.
-
----
-
-# Next Steps
-
-The next phase of the project is:
-
-1. Install the additional DDR3 memory
-2. Verify that 16 GB is detected
-3. Perform memory validation/testing
-4. Enable Intel hardware virtualization in UEFI
-5. Perform additional HDD health testing
-6. Back up or remove any required Windows data
-7. Install Proxmox VE
-8. Configure Proxmox management networking
-9. Deploy the first Linux container
-10. Document configuration and validation
-
----
-
-# Project Evidence
-
-| Evidence | Purpose |
-|---|---|
-| System Information | Baseline hardware and firmware inventory |
-| Disk Management | Existing partition/storage assessment |
-| PowerShell inventory | Programmatic RAM and disk identification |
-| Internal chassis photos | Physical hardware/expansion assessment |
-| Future Proxmox screenshots | Hypervisor deployment and configuration |
-| Future network diagrams | Service architecture and segmentation |
-| Future backup tests | Demonstration of recovery procedures |
-
----
-
-# Project Timeline
-
-### Phase 1 — Assessment
-**Status: Complete**
-
-- Diagnosed no-display issue
-- Restored video output
-- Inventoried system
-- Inspected hardware
-- Identified upgrade options
-- Developed server architecture
-
-### Phase 2 — Hardware Upgrade
-**Status: Planned**
-
-- Upgrade to 16 GB RAM
-- Validate memory
-- Enable virtualization
-- Evaluate SSD upgrade
-
-### Phase 3 — Virtualization
-**Status: Planned**
-
-- Install Proxmox VE
-- Configure networking
-- Configure storage
-- Create VM/LXC templates
-
-### Phase 4 — Infrastructure
-**Status: Planned**
-
-- DNS filtering
-- File services
-- Backups
-- Monitoring
-
-### Phase 5 — Homelab
-**Status: Planned**
-
-- Windows Server
-- Linux servers
-- Virtual networking
-- Administration and recovery exercises
-
----
-
-## Current Project State
-
-The Lenovo system is currently operational under Windows 10 Pro following resolution of the original display issue.
-
-Hardware assessment and upgrade planning are complete.
-
-**Next milestone: 16 GB memory upgrade and virtualization readiness testing.**
-
----
-
-*This is an ongoing homelab project. Documentation will be updated as each phase is implemented and validated.*
+This project is a work in progress. I will update this README with the actual configuration, commands, problems, and resolutions as the server is built.
