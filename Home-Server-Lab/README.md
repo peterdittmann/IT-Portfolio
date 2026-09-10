@@ -725,7 +725,7 @@ Once in Windows, I:
 
 The diagram below shows the current home lab infrastructure and planned Proxmox workloads. Solid borders represent deployed infrastructure, while dashed borders represent planned services.
 
-![Home Lab Infrastructure](diagrams/homelab-infrastructure.png)
+![Home Lab Infrastructure](diagram/Network Diagram.drawio.svg)
 
 ---
 
