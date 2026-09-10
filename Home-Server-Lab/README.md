@@ -209,12 +209,7 @@ Total:     16 GB DDR3-1600
 
 After installation, I checked the system firmware and Windows to confirm that all 16 GB was detected and operating at 1600 MHz.
 
-<!-- IMAGE TO ADD:
-     BIOS/UEFI showing 16384 MB and 1600 MHz
-     Suggested filename: images/uefi-16gb-memory.jpg
--->
-
-![16 GB memory detected in UEFI](images/uefi-16gb-memory.jpg)
+![16 GB memory detected in UEFI](images/Uefi-16gb-memory.jpg)
 
 Because the final configuration uses DIMMs from two manufacturers, detection alone was not enough to consider the upgrade successful.
 
@@ -230,12 +225,7 @@ Event ID 1201 reported:
 The Windows Memory Diagnostic tested the computer's memory and detected no errors.
 ```
 
-<!-- IMAGE TO ADD:
-     Event Viewer showing Windows Memory Diagnostic Event ID 1201
-     Suggested filename: images/windows-memory-diagnostic-pass.png
--->
-
-![Windows Memory Diagnostic passed](images/windows-memory-diagnostic-pass.png)
+![Windows Memory Diagnostic passed](images/Windows-memory-diagnostic-pass.png)
 
 With all 16 GB detected and the memory diagnostic completing without errors, I decided to keep the mixed Hynix and Gigastone configuration.
 
@@ -259,12 +249,7 @@ Hyper-V - Virtualization Enabled in Firmware: Yes
 Hyper-V - Data Execution Prevention: Yes
 ```
 
-<!-- IMAGE TO ADD:
-     Updated msinfo32 showing Virtualization Enabled in Firmware: Yes
-     Suggested filename: images/virtualization-enabled.png
--->
-
-![Virtualization enabled in firmware](images/virtualization-enabled.png)
+![Virtualization enabled in firmware](images/Virtualization-enabled.png)
 
 This confirmed that the system was ready to run a bare-metal hypervisor.
 
@@ -296,12 +281,7 @@ Completed without error
 
 No first-error LBA was reported.
 
-<!-- IMAGE TO ADD:
-     SMART output showing the completed extended self-test
-     Suggested filename: images/hdd-smart-extended-test.png
--->
-
-![HDD extended SMART test](images/hdd-smart-extended-test.png)
+![HDD extended SMART test](images/Hhd-smart-extended-test.png)
 
 These results were good enough for me to proceed with the HDD for the initial lab deployment.
 
@@ -326,6 +306,8 @@ The management address is configured statically so the location of the hyperviso
 
 The Proxmox web interface uses a self-signed certificate by default, so browsers currently display a certificate warning when I access the management interface over the LAN. This is expected for the current lab configuration.
 
+![Initial Proxmox VE deployment](images/Proxmox-Summary-Initial.png)
+
 ## Repository Configuration and Updates
 
 After installation, I attempted to update the Proxmox host.
@@ -337,6 +319,8 @@ The update initially returned:
 ```
 
 The failing source was the Proxmox enterprise repository.
+
+![Proxmox enterprise repository 401 error](images/Proxmox-enterprise-repo-401.png)
 
 The enterprise repository requires a paid subscription, which this lab does not use. I enabled the `pve-no-subscription` repository instead.
 
@@ -352,15 +336,7 @@ The update task completed successfully with:
 TASK OK
 ```
 
-<!-- OPTIONAL IMAGE:
-     If available, use a screenshot showing either:
-     1. the 401 Unauthorized error, or
-     2. a before/after comparison showing the error and successful update.
-
-     Suggested filenames:
-     images/proxmox-enterprise-repo-401.png
-     images/proxmox-repositories-fixed.png
--->
+![Proxmox repositories corrected](images/Proxmox-repositories-fixed.png)
 
 This was my first configuration issue after installing Proxmox and provided a useful example of separating a repository authentication problem from a general network or package-manager failure.
 
@@ -418,12 +394,7 @@ default via 192.168.1.254 dev vmbr0
 
 This also gave me a clearer practical understanding of the difference between the physical network interface and the virtual bridge used by the hypervisor.
 
-<!-- IMAGE TO ADD:
-     Terminal output showing ip addr / ip route
-     Suggested filename: images/proxmox-network-configuration.png
--->
-
-![Proxmox network configuration](images/proxmox-network-configuration.png)
+![Proxmox IP address and routing configuration](images/Iproute-ipaddr.png)
 
 ## Proxmox Storage Layout
 
@@ -461,12 +432,7 @@ The missing capacity was therefore not actually missing.
 
 `df -h` reports mounted filesystems, while the large `pve-data` LVM-thin pool is used for VM and LXC disks and is not displayed as a conventional mounted filesystem.
 
-<!-- IMAGE TO ADD:
-     lsblk output showing pve-root, pve-swap and pve-data
-     Suggested filename: images/proxmox-storage-lsblk.png
--->
-
-![Proxmox storage layout](images/proxmox-storage-lsblk.png)
+![Proxmox storage layout](images/Proxmox-storage-lsblk.png)
 
 This was a useful example of why storage troubleshooting sometimes requires looking beyond filesystem usage and examining the underlying block-device and volume layout.
 
@@ -588,17 +554,6 @@ DNS resolution
 
 If the gateway and `1.1.1.1` had responded while the hostname failed, DNS would have become the primary troubleshooting target.
 
-<!-- IMAGE TO ADD:
-     Prefer ONE terminal screenshot showing the strongest combination of:
-     ip addr
-     ip route
-     successful ping tests
-
-     Suggested filename: images/debian-lxc-network-validation.png
--->
-
-![Debian LXC network validation](images/debian-lxc-network-validation.png)
-
 ## LXC Updates and Resource Usage
 
 Once basic networking was confirmed, I updated the Debian container:
@@ -634,14 +589,7 @@ After validating the Proxmox host and first LXC container, I shut down the syste
 
 The Lenovo now runs without a dedicated monitor, keyboard, or mouse and connects to the home network through wired Ethernet.
 
-<!-- IMAGE TO ADD:
-     Physical photo of the Lenovo in its final location.
-     Crop unnecessary electrical panel paperwork/labels before publishing.
-
-     Suggested filename: images/proxmox-headless-deployment.jpg
--->
-
-![Lenovo Proxmox server deployed headless](images/proxmox-headless-deployment.jpg)
+![Lenovo Proxmox server deployed headless](images/Proxmox-headless-deployment.jpg)
 
 After powering the system back on, I returned to another workstation on the LAN and connected to:
 
@@ -651,14 +599,7 @@ https://192.168.1.10:8006
 
 The Proxmox node was online and accessible without requiring any locally attached input or display devices.
 
-<!-- IMAGE TO ADD:
-     Prefer a native screenshot of the Proxmox Summary page from the remote workstation.
-     If unavailable, use the photo already taken of the remote workstation.
-
-     Suggested filename: images/proxmox-remote-management.png
--->
-
-![Remote Proxmox administration](images/proxmox-remote-management.png)
+![Remote Proxmox administration](images/Proxmox-remote-management.jpg)
 
 This completed the initial objective of converting the unused Lenovo desktop into a remotely managed virtualization host.
 
