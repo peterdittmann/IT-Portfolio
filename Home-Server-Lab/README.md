@@ -721,4 +721,12 @@ Once in Windows, I:
 
 ---
 
+## Infrastructure Diagram
+
+The diagram below shows the current home lab infrastructure and planned Proxmox workloads. Solid borders represent deployed infrastructure, while dashed borders represent planned services.
+
+![Home Lab Infrastructure](diagrams/homelab-infrastructure.png)
+
+---
+
 This project is a work in progress. I will continue updating this README with the actual configurations, commands, problems, troubleshooting steps, and resolutions as additional services are deployed.
