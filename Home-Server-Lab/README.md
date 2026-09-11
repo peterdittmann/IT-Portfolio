@@ -725,8 +725,7 @@ I created a second unprivileged Debian 13 LXC:
 | IPv4 | `192.168.1.11/24` |
 | Default gateway | `192.168.1.254` |
 
-![AdGuard LXC configuration](images/Adguard/adguard-lxc-configuration.png)
-
+![AdGuard LXC configuration](Home-Server-Lab/images/AdGuard/adguard-lxc-configuration.png)
 Unlike `debian-lab`, the AdGuard container was assigned a static IPv4 address.
 
 A DNS server requires a predictable address because clients need to know where to send DNS queries.
