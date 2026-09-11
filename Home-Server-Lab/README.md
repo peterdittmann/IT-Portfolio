@@ -1,12 +1,62 @@
 # Lenovo Home Server Lab
 
-I was given an older Lenovo desktop and wanted to determine whether it was worth repurposing as a home server and virtualization lab rather than leaving it unused.
+I was given an older Lenovo desktop and wanted to determine whether it could be repurposed as a home server and virtualization lab rather than leaving it unused.
 
-The machine initially powered on but produced no display. After troubleshooting that issue, I inventoried and validated the hardware, upgraded the memory, tested the existing hard drive, enabled hardware virtualization, and installed Proxmox VE as a bare-metal hypervisor.
+The project began with troubleshooting a no-display condition and progressed through hardware inventory, memory expansion, storage health testing, virtualization configuration, bare-metal Proxmox deployment, Linux container administration, and deployment of a dedicated AdGuard Home DNS service.
 
-The system now runs headless on my home network and is remotely administered through Proxmox. I have deployed an initial Debian LXC container and am using the server to build practical experience with virtualization, Linux, networking, storage, DNS, and infrastructure troubleshooting.
+The system now runs headless on my home network and is administered remotely through Proxmox. It currently hosts a general-purpose Debian LXC for Linux experimentation and a dedicated AdGuard Home LXC for local DNS resolution and filtering.
 
-This repository documents the build, including the problems encountered, troubleshooting process, configuration decisions, and validation performed along the way.
+The purpose of this project is not only to deploy services, but to practice the complete process of:
+
+- assessing existing hardware
+- troubleshooting faults systematically
+- planning infrastructure changes
+- implementing and validating configurations
+- administering Linux systems
+- understanding networking and service dependencies
+- documenting technical decisions
+- developing repeatable troubleshooting and recovery procedures
+
+This README documents the actual configuration, troubleshooting, decisions, commands, and validation performed as the environment develops.
+
+---
+
+## Current Environment
+
+| Component | Current Configuration |
+| --- | --- |
+| Host | Lenovo 10A8S00200 |
+| CPU | Intel Core i5-4570 |
+| CPU configuration | 4 cores / 4 threads |
+| Memory | 16 GB DDR3-1600 |
+| Storage | 500 GB Seagate HDD |
+| Hypervisor | Proxmox VE 9.2 |
+| Kernel | `7.0.14-16-pve` |
+| Management IP | `192.168.1.10/24` |
+| Default gateway | `192.168.1.254` |
+| LAN subnet | `192.168.1.0/24` |
+| Virtual bridge | `vmbr0` |
+| CT 100 | `debian-lab` — Debian 13 general-purpose lab |
+| CT 100 networking | DHCP via `vmbr0` |
+| CT 101 | `adguard` — Debian 13 / AdGuard Home |
+| CT 101 address | `192.168.1.11/24` static |
+| AdGuard DNS | TCP/UDP 53 |
+| AdGuard administration | HTTP 80, LAN only |
+| Administration | Headless via Proxmox web interface |
+
+---
+
+## Infrastructure Diagram
+
+The diagram below shows the current home lab infrastructure and planned Proxmox workloads.
+
+Solid borders represent deployed infrastructure, while dashed borders represent planned services.
+
+![Home Lab Infrastructure](diagram/homelab-infrastructure.drawio.svg)
+
+---
+
+# 1. Initial Hardware Assessment
 
 ## Starting Hardware
 
@@ -21,21 +71,27 @@ This repository documents the build, including the problems encountered, trouble
 | Drive model | ST500DM002-1SB10A |
 | GPU | NVIDIA T1000 |
 | Firmware | UEFI |
-| Operating system | Windows 10 Pro, Build 19045 |
+| Original operating system | Windows 10 Pro |
 
-## Initial Troubleshooting
+---
 
-### No Display Output
+## Initial Troubleshooting — No Display
 
-When I first powered on the machine, the fans started, the power LED remained on, and the keyboard received power, but the monitor reported `No Signal`.
+When I first powered on the machine, the fans started, the power LED remained on, and the keyboard received power, but the monitor reported:
+
+```text
+No Signal
+```
 
 The monitor was connected by DisplayPort to the motherboard.
 
-Since the machine appeared to be powering up normally, I inspected the system for another possible display output before assuming there was a larger hardware problem.
+Since the system showed several signs that it was powering up normally, I checked the available display hardware before assuming that the RAM, motherboard, CPU, or power supply had failed.
 
-Opening the chassis revealed an NVIDIA T1000 discrete graphics card. The card uses Mini DisplayPort outputs, so I connected the monitor directly to the T1000 using a Mini DisplayPort-to-DisplayPort cable.
+Opening the chassis revealed an NVIDIA T1000 discrete graphics card using Mini DisplayPort outputs.
 
-Video output returned immediately and the system booted normally.
+I connected the monitor directly to the T1000 using a Mini DisplayPort-to-DisplayPort cable.
+
+Video output returned immediately and the machine booted normally.
 
 **Cause:** The display was connected to the motherboard video output rather than the installed discrete GPU.
 
@@ -43,13 +99,21 @@ Video output returned immediately and the system booted normally.
 
 ![NVIDIA T1000 and motherboard](images/lenovo-motherboard.jpg)
 
-This was a useful reminder not to jump from "no display" directly to failed RAM, motherboard, CPU, or power supply. The other signs of life suggested the machine might already be completing POST, so checking the available display hardware was a low-risk place to start.
+This was an early example of using the available symptoms to narrow the problem before replacing hardware. The fans, power LED, and keyboard power suggested that the machine could already be completing POST, making the display path a reasonable first troubleshooting target.
 
-## System Inventory
+---
 
-Once I had access to Windows, I wanted to establish exactly what hardware I was working with before buying anything.
+# 2. Hardware Inventory
 
-I started with Windows System Information (`msinfo32`).
+Once Windows was accessible, I established a hardware baseline before purchasing or replacing components.
+
+## Windows System Information
+
+I started with Windows System Information:
+
+```text
+msinfo32
+```
 
 ![Windows System Information](images/system-information.png)
 
@@ -61,17 +125,17 @@ This confirmed:
 - Windows 10 Pro
 - Lenovo 10A8 platform
 
-The CPU reports the required virtualization extensions, but System Information initially showed:
+The processor reported the necessary virtualization extensions, but System Information initially showed:
 
 ```text
 Virtualization Enabled in Firmware: No
 ```
 
-This identified hardware virtualization as a configuration issue that needed to be resolved before deploying the system as a virtualization host. I addressed this during the hardware-validation stage documented below.
+This indicated that the CPU supported virtualization but that the feature still needed to be enabled in firmware before the system could be used as intended.
+
+---
 
 ## Memory Investigation
-
-I wanted the exact specifications of the existing memory before deciding what to purchase.
 
 I queried the installed DIMMs with PowerShell:
 
@@ -89,45 +153,45 @@ Capacity     : 4294967296
 Speed        : 1600
 ```
 
-Each module is 4 GB, giving the system its starting 8 GB total.
+Each module was 4 GB, giving the system 8 GB total.
 
 ![PowerShell memory and disk inventory](images/powershell-hardware-inventory.png)
 
-Physical inspection showed four DIMM slots, with two populated.
+Physical inspection showed four DIMM slots with two populated.
 
 ![Internal system overview](images/lenovo-internal-overview.jpg)
 
-Based on this assessment, I decided to add another 2 x 4 GB DDR3-1600 kit rather than replacing the existing memory.
-
-The target configuration was:
+Rather than replacing the existing memory, I decided to add another 2 x 4 GB DDR3-1600 kit.
 
 ```text
-Starting:  8 GB
-Target:   16 GB
+Starting memory:  8 GB
+Target memory:   16 GB
 ```
 
-Sixteen gigabytes would provide considerably more room for lightweight virtual machines and containers while keeping the amount invested in this older platform low.
+This provided more capacity for virtual machines and containers while keeping the investment in the older platform low.
+
+---
 
 ## Storage Investigation
 
-Disk Management showed one physical disk with approximately 465 GB of usable capacity.
+Disk Management showed a single physical disk with approximately 465 GB of usable capacity.
 
 ![Windows Disk Management](images/disk-management.png)
 
-The disk contained the existing Windows installation with:
+The original Windows installation contained:
 
 - 100 MB EFI System Partition
 - approximately 465 GB NTFS Windows partition
 - 548 MB Recovery partition
 
-I then queried the physical disk from PowerShell:
+I queried the physical disk using PowerShell:
 
 ```powershell
 Get-CimInstance Win32_DiskDrive |
     Select-Object Model, Size, Status
 ```
 
-The installed drive was identified as:
+The installed drive was:
 
 ```text
 Model  : ST500DM002-1SB10A
@@ -135,26 +199,22 @@ Size   : 500105249280
 Status : OK
 ```
 
-This is a 500 GB Seagate mechanical hard drive.
+Because this was an older mechanical drive, I did not consider the basic Windows `OK` result sufficient evidence of its health before using it for the Proxmox installation.
 
-The drive reported an OK status through Windows, but because it is an older HDD I did not want to rely on that result alone before using it as the storage device for the Proxmox installation.
+---
 
 ## Physical Inspection
 
-After shutting the machine down and disconnecting power, I opened the chassis to see what expansion options were available.
-
-![Internal system overview](images/lenovo-internal-overview.jpg)
-
-I was specifically looking for:
+After shutting down and disconnecting the system, I inspected the chassis for:
 
 - available memory slots
 - storage mounting locations
 - SATA connections
 - PCIe expansion
 - existing cabling
-- general condition of the machine
+- general physical condition
 
-The system has four DIMM slots, with two originally occupied, which made the planned memory upgrade straightforward.
+![Internal system overview](images/lenovo-internal-overview.jpg)
 
 The NVIDIA T1000 occupies the primary PCIe slot, with additional expansion available below it.
 
@@ -164,15 +224,15 @@ The existing Seagate HDD is mounted in Lenovo's drive assembly.
 
 ![Lenovo drive cage](images/lenovo-drive-cage.jpg)
 
-There is enough flexibility in the chassis to continue investigating an SSD and additional storage, but I decided not to buy storage immediately.
+There is room to continue investigating additional storage, but I decided against purchasing an SSD immediately.
 
-I looked at several SATA SSD options during the assessment, but the prices I found did not make sense relative to the age and value of the machine. I decided to upgrade the inexpensive DDR3 memory, continue validating the existing hardware, and revisit SSD storage later.
+---
 
-## Upgrade Decisions
+# 3. Upgrade Decisions and Hardware Validation
 
-My approach with this machine was to avoid spending money simply because something *could* be upgraded.
+My approach was to avoid replacing hardware simply because newer hardware was available.
 
-Based on the initial assessment, I chose:
+The initial upgrade plan became:
 
 ```text
 Memory:   8 GB -> 16 GB DDR3-1600
@@ -181,25 +241,13 @@ SSD:      Deferred
 Backups:  Future dedicated storage
 ```
 
-### Storage Upgrade Decision
+The existing HDD was sufficient for learning Proxmox and running lightweight services. VM and container storage performance would be lower than with an SSD, but that did not prevent the machine from fulfilling the initial objectives of the project.
 
-I initially planned to replace the existing 500 GB HDD with a SATA SSD before deploying the server.
+---
 
-While researching 500 GB and 1 TB SATA drives, I found that current SSD pricing was considerably higher than I expected. Rather than spending heavily on storage for an older platform, I decided to keep the existing HDD for the initial build.
-
-For the first stage of the project, the HDD is sufficient for installing Proxmox, learning the platform, and running lightweight services. VM and container storage performance will be slower than it would be on an SSD, but this does not prevent me from building and testing the environment.
-
-The SSD upgrade has therefore been deferred rather than cancelled. I will revisit it when I find a reasonably priced SATA SSD.
-
-## Hardware Upgrade and Validation
-
-Before replacing Windows with Proxmox, I completed the planned memory upgrade and tested the existing hardware to make sure the system was stable enough to use as a virtualization host.
-
-### Memory Upgrade
+## Memory Upgrade
 
 I installed an additional 2 x 4 GB Gigastone DDR3-1600 kit alongside the existing Hynix memory.
-
-The resulting configuration is:
 
 ```text
 Existing:  2 x 4 GB Hynix DDR3-1600
@@ -207,17 +255,19 @@ Added:     2 x 4 GB Gigastone DDR3-1600
 Total:     16 GB DDR3-1600
 ```
 
-After installation, I checked the system firmware and Windows to confirm that all 16 GB was detected and operating at 1600 MHz.
+UEFI and Windows both detected all 16 GB operating at 1600 MHz.
 
 ![16 GB memory detected in UEFI](images/Uefi-16gb-memory.jpg)
 
-Because the final configuration uses DIMMs from two manufacturers, detection alone was not enough to consider the upgrade successful.
+Because the final configuration uses DIMMs from two manufacturers, detection alone was not enough to consider the upgrade validated.
 
-### Memory Testing
+---
 
-I ran Windows Memory Diagnostic using two passes to check the upgraded memory configuration for errors.
+## Memory Testing
 
-After the test completed, I checked Event Viewer for the diagnostic result.
+I ran Windows Memory Diagnostic using two passes.
+
+After the test completed, I checked Event Viewer.
 
 Event ID 1201 reported:
 
@@ -227,20 +277,18 @@ The Windows Memory Diagnostic tested the computer's memory and detected no error
 
 ![Windows Memory Diagnostic passed](images/Windows-memory-diagnostic-pass.png)
 
-With all 16 GB detected and the memory diagnostic completing without errors, I decided to keep the mixed Hynix and Gigastone configuration.
+With all 16 GB detected and the diagnostic completing without errors, I retained the mixed Hynix and Gigastone configuration.
 
-### Virtualization Readiness
+---
 
-The initial Windows assessment showed that the processor supported virtualization, but virtualization was disabled in firmware.
+## Virtualization Readiness
 
 I entered UEFI and enabled:
 
 - Intel Virtualization Technology (VT-x)
 - Intel VT-d
 
-After booting back into Windows, I returned to System Information to verify the change.
-
-The system reported:
+After returning to Windows, System Information reported:
 
 ```text
 Hyper-V - VM Monitor Mode Extensions: Yes
@@ -251,13 +299,13 @@ Hyper-V - Data Execution Prevention: Yes
 
 ![Virtualization enabled in firmware](images/Virtualization-enabled.png)
 
-This confirmed that the system was ready to run a bare-metal hypervisor.
+This confirmed that the machine was ready for use as a virtualization host.
 
-### HDD Health Validation
+---
 
-Because I decided to retain the existing 500 GB mechanical hard drive, I wanted more information about its condition than the basic `Status : OK` result returned by Windows.
+## HDD Health Validation
 
-I installed `smartmontools` and inspected the SMART data for the drive.
+Because I planned to retain the existing HDD, I used `smartmontools` to inspect its SMART data.
 
 Important attributes included:
 
@@ -271,9 +319,11 @@ Power-on hours:            ~10,272
 Temperature:               34 C
 ```
 
-The SMART error log did not contain recorded disk errors.
+The SMART error log contained no recorded disk errors.
 
-I then ran an extended SMART self-test against the drive. The completed test reported:
+I then ran an extended SMART self-test.
+
+The completed test reported:
 
 ```text
 Completed without error
@@ -283,17 +333,19 @@ No first-error LBA was reported.
 
 ![HDD extended SMART test](images/Hhd-smart-extended-test.png)
 
-These results were good enough for me to proceed with the HDD for the initial lab deployment.
+These results were sufficient for the initial lab deployment.
 
-The drive is still older mechanical storage, so I do not intend to treat it as the only copy of important data. A future SSD upgrade and proper backup strategy remain part of the project.
+The HDD remains older mechanical storage, so it will not be treated as the only copy of important data. Backup storage and a future SSD upgrade remain planned improvements.
 
-## Proxmox VE Deployment
+---
 
-With the memory, virtualization support, and HDD validated, I replaced the Windows installation with Proxmox VE.
+# 4. Proxmox VE Deployment
 
-Proxmox was installed directly on the Lenovo as a bare-metal hypervisor using the existing 500 GB Seagate HDD.
+With the memory, virtualization support, and storage validated, I replaced Windows with Proxmox VE.
 
-The initial management configuration is:
+Proxmox was installed directly on the Lenovo as a bare-metal hypervisor.
+
+The initial management configuration was:
 
 ```text
 Hostname:         pve
@@ -302,35 +354,49 @@ Default gateway:  192.168.1.254
 Web interface:    https://192.168.1.10:8006
 ```
 
-The management address is configured statically so the location of the hypervisor does not depend on a changing DHCP lease.
+The management address is static so access to the hypervisor does not depend on a changing DHCP lease.
 
-The Proxmox web interface uses a self-signed certificate by default, so browsers currently display a certificate warning when I access the management interface over the LAN. This is expected for the current lab configuration.
+The Proxmox web interface currently uses its default self-signed certificate, so browsers display a certificate warning when accessing it over the LAN.
 
 ![Initial Proxmox VE deployment](images/Proxmox-Summary-Initial.png)
 
-## Repository Configuration and Updates
+---
+
+# 5. Repository Troubleshooting and Host Updates
 
 After installation, I attempted to update the Proxmox host.
 
-The update initially returned:
+The update returned:
 
 ```text
 401 Unauthorized
 ```
 
-The failing source was the Proxmox enterprise repository.
-
 ![Proxmox enterprise repository 401 error](images/Proxmox-enterprise-repo-401.png)
 
-The enterprise repository requires a paid subscription, which this lab does not use. I enabled the `pve-no-subscription` repository instead.
+Rather than treating this as a general connectivity failure, I examined which repository was returning the error.
+
+The failing source was the Proxmox enterprise repository.
+
+The enterprise repository requires a paid subscription, which this lab does not use.
+
+I enabled:
+
+```text
+pve-no-subscription
+```
 
 A subsequent update still produced an authorization error because the enterprise Ceph repository remained enabled.
 
-I disabled the enterprise Ceph repository as well and ran the update again.
+I disabled the enterprise Ceph repository and ran the update again.
 
-The host was then able to retrieve updates successfully from the Debian, Debian security, and Proxmox no-subscription repositories.
+The host then successfully retrieved updates from:
 
-The update task completed successfully with:
+- Debian repositories
+- Debian security repositories
+- Proxmox no-subscription repository
+
+The update completed with:
 
 ```text
 TASK OK
@@ -338,13 +404,48 @@ TASK OK
 
 ![Proxmox repositories corrected](images/Proxmox-repositories-fixed.png)
 
-This was my first configuration issue after installing Proxmox and provided a useful example of separating a repository authentication problem from a general network or package-manager failure.
+### Troubleshooting Summary
 
-### Kernel Update Verification
+```text
+Symptom
+   |
+   v
+apt update returns 401 Unauthorized
+   |
+   v
+Identify failing repository
+   |
+   v
+Enterprise repository requires subscription
+   |
+   v
+Enable pve-no-subscription
+   |
+   v
+401 remains
+   |
+   v
+Identify enterprise Ceph repository
+   |
+   v
+Disable enterprise Ceph repository
+   |
+   v
+Retest
+   |
+   v
+TASK OK
+```
 
-After completing the Proxmox updates, the system reported that a new kernel had been installed and recommended rebooting the node.
+This demonstrated the importance of reading the specific error source rather than assuming that all package update failures indicate broken networking.
 
-I rebooted the host and checked the active kernel:
+---
+
+## Kernel Update Verification
+
+After the updates, Proxmox reported that a new kernel had been installed.
+
+I rebooted the host and checked:
 
 ```bash
 uname -r
@@ -356,19 +457,16 @@ The system returned:
 7.0.14-16-pve
 ```
 
-This confirmed that the host had successfully booted using the updated Proxmox kernel.
+This confirmed that the host had successfully booted using the updated kernel.
 
-## Proxmox Networking
+---
+
+# 6. Proxmox Networking
 
 I inspected the host networking with:
 
 ```bash
 ip addr
-```
-
-and:
-
-```bash
 ip route
 ```
 
@@ -383,20 +481,22 @@ LAN subnet:         192.168.1.0/24
 
 The physical Ethernet interface is attached to the Linux bridge `vmbr0`.
 
-The host's routing table showed:
+The routing table showed:
 
 ```text
 default via 192.168.1.254 dev vmbr0
 192.168.1.0/24 dev vmbr0 proto kernel scope link src 192.168.1.10
 ```
 
-`vmbr0` allows virtual machines and containers to connect through the physical network interface while appearing as separate systems on the LAN.
-
-This also gave me a clearer practical understanding of the difference between the physical network interface and the virtual bridge used by the hypervisor.
-
 ![Proxmox IP address and routing configuration](images/Iproute-ipaddr.png)
 
-## Proxmox Storage Layout
+`vmbr0` allows virtual machines and containers to communicate through the physical network interface while appearing as individual systems on the LAN.
+
+This provided practical experience with the distinction between a physical network interface and the Linux bridge used by the hypervisor.
+
+---
+
+# 7. Proxmox Storage Layout
 
 After installation, I initially noticed that:
 
@@ -404,17 +504,15 @@ After installation, I initially noticed that:
 df -h
 ```
 
-showed approximately 94 GB for the root filesystem.
+showed approximately 94 GB for the root filesystem even though the machine contains a 500 GB disk.
 
-Since the machine contains a 500 GB disk, I wanted to determine where the remaining capacity had been allocated.
-
-I inspected the block devices using:
+Rather than assuming the remaining capacity was missing, I inspected the block-device layout:
 
 ```bash
 lsblk
 ```
 
-The Proxmox installer had created an LVM-based storage layout consisting approximately of:
+The Proxmox installer had created approximately:
 
 ```text
 500 GB Seagate HDD
@@ -428,32 +526,34 @@ The Proxmox installer had created an LVM-based storage layout consisting approxi
 +-- pve-data     ~337 GB LVM-thin pool
 ```
 
-The missing capacity was therefore not actually missing.
-
-`df -h` reports mounted filesystems, while the large `pve-data` LVM-thin pool is used for VM and LXC disks and is not displayed as a conventional mounted filesystem.
-
 ![Proxmox storage layout](images/Proxmox-storage-lsblk.png)
 
-This was a useful example of why storage troubleshooting sometimes requires looking beyond filesystem usage and examining the underlying block-device and volume layout.
+The capacity was therefore accounted for.
 
-Within Proxmox, this storage is presented primarily as:
+`df -h` reports mounted filesystems, while the `pve-data` LVM-thin pool provides storage for VM and LXC disks and does not appear as a conventional mounted filesystem.
 
-- `local` for directory-based host storage such as templates and backups
-- `local-lvm` for VM and LXC virtual disks
+Within Proxmox, the storage is presented primarily as:
 
-## First LXC Container
+- `local` — directory-based storage for templates and backups
+- `local-lvm` — LVM-thin storage for VM and LXC virtual disks
 
-With the Proxmox host updated and networking verified, I created my first Linux container.
+This was another useful troubleshooting example where the first command did not provide the complete picture.
 
-I wanted the first container to remain a general-purpose Debian environment rather than immediately turning it into a household service. This gives me a lightweight system that I can experiment with, troubleshoot, and rebuild without affecting other devices.
+---
 
-I downloaded the Debian 13 standard LXC template:
+# 8. First LXC Container
+
+I created a general-purpose Debian environment before deploying any household service.
+
+This gives me a lightweight container that can be modified, broken, troubleshot, and rebuilt without affecting other systems.
+
+I downloaded:
 
 ```text
 debian-13-standard_13.6-1_amd64.tar.zst
 ```
 
-I then created:
+and created:
 
 | Setting | Configuration |
 | --- | --- |
@@ -469,72 +569,59 @@ I then created:
 | Network bridge | `vmbr0` |
 | IPv4 | DHCP |
 
-The resource allocation was intentionally small because the container is being used as a basic Linux lab rather than a resource-intensive workload.
+The resource allocation was intentionally small because the container is intended as a basic Linux lab rather than a resource-intensive workload.
 
-## LXC Network Validation
+---
 
-After starting the container, I logged in through the Proxmox console and inspected its network configuration.
+## Layered Network Validation
+
+After starting the container, I inspected:
 
 ```bash
 ip addr
+ip route
 ```
 
-The container received an IPv4 address from DHCP:
+The container received:
 
 ```text
 192.168.1.77/24
 ```
 
-I then checked its routing table:
-
-```bash
-ip route
-```
-
-The result included:
+Its routing table included:
 
 ```text
 default via 192.168.1.254 dev eth0
 192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.77
 ```
 
-This confirmed that the container had received both a valid LAN address and the correct default gateway.
-
-Rather than treating a single successful ping as proof that networking was working, I tested connectivity in stages.
+Rather than treating a single successful ping as proof that networking was working, I tested connectivity in layers.
 
 ### Local Gateway
-
-First, I tested the router:
 
 ```bash
 ping -c 4 192.168.1.254
 ```
 
-A successful response confirmed local Layer 3 connectivity between the container and the router.
+A successful response confirmed connectivity between the container and the router.
 
 ### Internet Routing
-
-Next, I tested an external IP address:
 
 ```bash
 ping -c 4 1.1.1.1
 ```
 
-This also succeeded.
-
-Because the test used an IP address rather than a hostname, it demonstrated that the container could route traffic beyond the local network without relying on DNS.
+This tested external connectivity without requiring DNS.
 
 ### DNS Resolution
-
-Finally, I tested a hostname:
 
 ```bash
 ping -c 4 google.com
 ```
 
-This succeeded as well.
+This tested hostname resolution.
 
-The troubleshooting sequence therefore validated:
+The sequence can be represented as:
 
 ```text
 Container
@@ -552,20 +639,22 @@ Internet routing
 DNS resolution
 ```
 
-If the gateway and `1.1.1.1` had responded while the hostname failed, DNS would have become the primary troubleshooting target.
+If the gateway and `1.1.1.1` had responded while `google.com` failed, DNS would have become the primary troubleshooting target.
 
-## LXC Updates and Resource Usage
+This layered approach is now part of the troubleshooting process I use when diagnosing basic network connectivity.
 
-Once basic networking was confirmed, I updated the Debian container:
+---
+
+## Container Updates and Resource Usage
+
+Once networking was validated:
 
 ```bash
 apt update
 apt upgrade
 ```
 
-The upgrade completed successfully.
-
-I then checked its memory and disk usage:
+I then checked resource usage:
 
 ```bash
 free -h
@@ -579,34 +668,375 @@ Memory:  34 MiB / 512 MiB
 Disk:    713 MiB / 8 GiB
 ```
 
-The low resource usage demonstrates one of the reasons I wanted to experiment with LXC containers. A basic Linux environment can provide an isolated workload while consuming substantially fewer resources than a full virtual machine.
+This demonstrated the low resource overhead of LXC for lightweight Linux workloads.
 
-This is especially useful on an older system with 16 GB of total memory.
+---
 
-## Headless Deployment
+# 9. AdGuard Home DNS Deployment
 
-After validating the Proxmox host and first LXC container, I shut down the system and moved it to its intended location near the home network equipment.
+After validating the general-purpose Debian container, I deployed the first dedicated network service on the Proxmox host.
 
-The Lenovo now runs without a dedicated monitor, keyboard, or mouse and connects to the home network through wired Ethernet.
+I chose AdGuard Home to gain practical experience with:
+
+- DNS
+- static addressing
+- Linux services
+- TCP/UDP ports
+- client/server communication
+- DNS filtering
+- service validation
+- troubleshooting network dependencies
+
+Rather than installing AdGuard Home inside `debian-lab`, I created a dedicated container so the experimental Linux environment could remain disposable.
+
+The basic DNS path is:
+
+```text
+Ubuntu workstation
+        |
+        | DNS query
+        v
+AdGuard Home LXC
+192.168.1.11
+        |
+        | upstream DNS
+        v
+Internet resolver
+```
+
+---
+
+## AdGuard Container Configuration
+
+I created a second unprivileged Debian 13 LXC:
+
+| Setting | Configuration |
+| --- | --- |
+| CT ID | 101 |
+| Hostname | `adguard` |
+| Operating system | Debian 13 |
+| Container type | Unprivileged LXC |
+| CPU | 1 core |
+| Memory | 512 MiB |
+| Swap | 512 MiB |
+| Root disk | 8 GiB |
+| Storage | `local-lvm` |
+| Network bridge | `vmbr0` |
+| IPv4 | `192.168.1.11/24` |
+| Default gateway | `192.168.1.254` |
+
+![AdGuard LXC configuration](images/adguard-lxc-configuration.png)
+
+Unlike `debian-lab`, the AdGuard container was assigned a static IPv4 address.
+
+A DNS server requires a predictable address because clients need to know where to send DNS queries.
+
+The resulting configuration was:
+
+```text
+AdGuard Home:     192.168.1.11/24
+Default gateway:  192.168.1.254
+Bridge:           vmbr0
+```
+
+---
+
+# 10. AdGuard Pre-Installation Validation
+
+Before installing the application, I established a known-good network baseline.
+
+I checked:
+
+```bash
+ip addr
+ip route
+```
+
+The relevant routing configuration was:
+
+```text
+default via 192.168.1.254 dev eth0
+192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.11
+```
+
+![AdGuard LXC network configuration](images/adguard-lxc-network-configuration.png)
+
+I then tested connectivity in stages:
+
+```bash
+ping -c 4 192.168.1.254
+ping -c 4 1.1.1.1
+ping -c 4 google.com
+```
+
+![AdGuard pre-install connectivity validation](images/adguard-preinstall-connectivity-validation.png)
+
+These tests established that:
+
+```text
+Static addressing       PASS
+Local gateway           PASS
+Internet routing        PASS
+DNS resolution          PASS
+```
+
+Establishing this baseline before installing AdGuard meant that a later failure could be separated from an existing network configuration problem.
+
+---
+
+## Pre-Installation Port Check
+
+I inspected existing listening sockets:
+
+```bash
+ss -tulpn
+```
+
+This allowed me to confirm that another DNS service was not already occupying port 53 before installing AdGuard Home.
+
+I also updated the Debian container:
+
+```bash
+apt update
+apt upgrade
+```
+
+and confirmed that it was running Debian 13.
+
+---
+
+# 11. AdGuard Installation and Service Validation
+
+AdGuard Home was installed under:
+
+```text
+/opt/AdGuardHome
+```
+
+The installed version was:
+
+```text
+AdGuard Home v0.107.79
+```
+
+After installation, I checked the service:
+
+```bash
+/opt/AdGuardHome/AdGuardHome -s status
+```
+
+The application reported:
+
+```text
+service: running
+```
+
+I then checked listening sockets again:
+
+```bash
+ss -tulpn
+```
+
+![AdGuard Home service installation validation](images/adguard-service-install-validation.png)
+
+This provided two separate forms of validation:
+
+```text
+Application service status     PASS
+Expected network listeners     PASS
+```
+
+I did not rely solely on the web interface loading as proof that the complete service was functioning.
+
+---
+
+# 12. DNS and Administrative Interface Configuration
+
+During initial setup, I configured AdGuard Home to use the container's static interface.
+
+The primary services became:
+
+```text
+Web administration:  192.168.1.11:80
+DNS service:         192.168.1.11:53
+```
+
+![AdGuard Home interface configuration](images/adguard-interface-configuration.png)
+
+Port 53 provides DNS service to clients.
+
+Port 80 provides the administrative interface on the local network.
+
+The administrative interface has not been exposed directly to the Internet.
+
+---
+
+# 13. Client-Side DNS Validation
+
+Rather than immediately changing DNS for the entire household, I first tested the service directly from my Ubuntu workstation.
+
+This limited the impact of a configuration error while still allowing the complete DNS path to be validated.
+
+From the workstation:
+
+```bash
+dig @192.168.1.11 google.com
+```
+
+The query completed successfully.
+
+The response identified:
+
+```text
+SERVER: 192.168.1.11#53(192.168.1.11) (UDP)
+```
+
+![Client DNS query validation](images/adguard-client-dns-query-validation.png)
+
+I then checked the AdGuard Home query log.
+
+The corresponding `google.com` request appeared with my Ubuntu workstation at `192.168.1.86` identified as the client.
+
+This provided validation from both ends:
+
+```text
+CLIENT
+Ubuntu workstation
+        |
+        | query
+        v
+SERVER
+AdGuard Home
+        |
+        | upstream lookup
+        v
+External resolver
+        |
+        | response
+        v
+Ubuntu workstation
+```
+
+The workstation demonstrated that the query succeeded.
+
+The server log demonstrated that AdGuard actually received and processed it.
+
+---
+
+# 14. DNS Filtering Validation
+
+Successful resolution demonstrated that AdGuard could operate as a DNS server, but it did not prove that filtering worked.
+
+I created a temporary custom filtering rule for:
+
+```text
+adguard-lab-test.invalid
+```
+
+From the Ubuntu workstation:
+
+```bash
+dig @192.168.1.11 adguard-lab-test.invalid
+```
+
+AdGuard returned:
+
+```text
+0.0.0.0
+```
+
+while identifying the DNS server as:
+
+```text
+SERVER: 192.168.1.11#53(192.168.1.11) (UDP)
+```
+
+I then checked the AdGuard Home query log.
+
+The request appeared as:
+
+```text
+adguard-lab-test.invalid
+Blocked
+Custom filtering rules
+Client: 192.168.1.86
+```
+
+![AdGuard Home filtering validation](images/adguard-filtering-query-log.png)
+
+The complete test path was therefore:
+
+```text
+Client generates DNS query
+        |
+        v
+AdGuard receives query
+        |
+        v
+Filtering rules evaluated
+        |
+        v
+Custom rule matched
+        |
+        v
+Request blocked
+        |
+        v
+Blocked response returned
+        |
+        v
+Event recorded in query log
+```
+
+Using a controlled test hostname provided a repeatable test instead of depending on whether a real advertising or tracking domain happened to be blocked.
+
+---
+
+# 15. AdGuard Deployment Validation
+
+At the end of the deployment I had independently validated:
+
+- static IP configuration
+- correct default route
+- local gateway connectivity
+- external IP connectivity
+- DNS resolution before application installation
+- availability of port 53 before installation
+- successful AdGuard Home installation
+- running application service
+- expected DNS listener
+- local administrative interface
+- successful DNS resolution from another machine
+- corresponding server-side query logging
+- custom DNS filtering
+- corresponding blocked-query logging
+
+The deployment was therefore validated beyond simply confirming that the AdGuard dashboard loaded.
+
+I verified the underlying network, application state, network listener, client/server communication, normal DNS resolution, and filtering behavior separately.
+
+---
+
+# 16. Headless Deployment and Remote Administration
+
+After validating the Proxmox host, I moved the machine to its intended location near the home network equipment.
+
+The Lenovo runs without a dedicated monitor, keyboard, or mouse and connects to the LAN through wired Ethernet.
 
 ![Lenovo Proxmox server deployed headless](images/Proxmox-headless-deployment.jpg)
 
-After powering the system back on, I returned to another workstation on the LAN and connected to:
+Administration is performed from another workstation using:
 
 ```text
 https://192.168.1.10:8006
 ```
 
-The Proxmox node was online and accessible without requiring any locally attached input or display devices.
-
 ![Remote Proxmox administration](images/Proxmox-remote-management.jpg)
 
-This completed the initial objective of converting the unused Lenovo desktop into a remotely managed virtualization host.
-
-The management path is now:
+The management path is:
 
 ```text
-Remote workstation
+Administration workstation
         |
         | LAN
         v
@@ -618,115 +1048,254 @@ Lenovo Proxmox host
         |
         +---- vmbr0
                  |
-                 +---- LXC / VM workloads
+                 +---- CT 100: debian-lab
+                 |
+                 +---- CT 101: adguard
 ```
 
-## Current Environment
+This completed the original objective of converting the unused desktop into a remotely administered virtualization host.
 
-The server has progressed from the original Windows 10 desktop configuration to the following environment:
+---
 
-| Component | Current Configuration |
-| --- | --- |
-| Host | Lenovo 10A8S00200 |
-| CPU | Intel Core i5-4570, 4 cores / 4 threads |
-| Memory | 16 GB DDR3-1600 |
-| Storage | 500 GB Seagate HDD |
-| Hypervisor | Proxmox VE 9.2 |
-| Kernel | `7.0.14-16-pve` |
-| Management IP | `192.168.1.10/24` |
-| Default gateway | `192.168.1.254` |
-| Virtual bridge | `vmbr0` |
-| First container | Debian 13 LXC |
-| Container resources | 1 vCPU / 512 MiB RAM / 8 GiB disk |
-| Container networking | DHCP via `vmbr0` |
-| Administration | Headless via Proxmox web interface |
+# 17. Troubleshooting Method
 
-## Intended Use
+As the lab has developed, I have started using a repeatable troubleshooting process rather than immediately changing configurations when something fails.
 
-With Proxmox VE now deployed, I intend to expand the system gradually as both a home server and an IT lab.
+My general process is:
 
-The next workloads I am considering include:
+```text
+Identify the symptom
+        |
+        v
+Determine scope and impact
+        |
+        v
+Gather configuration and error information
+        |
+        v
+Establish what is already working
+        |
+        v
+Isolate the failing layer/component
+        |
+        v
+Make one controlled change
+        |
+        v
+Retest
+        |
+        v
+Verify normal operation
+        |
+        v
+Document the cause and resolution
+```
 
-- AdGuard Home for local DNS filtering
+Examples from this project include:
+
+### No Display
+
+```text
+Power present
+-> system appeared to POST
+-> inspect display path
+-> identify discrete GPU
+-> move display connection
+-> video restored
+```
+
+### Proxmox Update Failure
+
+```text
+401 Unauthorized
+-> identify failing repository
+-> determine subscription requirement
+-> correct repository configuration
+-> identify remaining Ceph enterprise source
+-> disable it
+-> rerun update
+-> TASK OK
+```
+
+### Container Networking
+
+```text
+Check IP configuration
+-> check route
+-> test gateway
+-> test external IP
+-> test hostname
+-> isolate DNS only after lower layers work
+```
+
+### AdGuard DNS
+
+```text
+Validate network first
+-> check port availability
+-> install service
+-> verify service state
+-> verify listening port
+-> query from separate client
+-> verify server-side log
+-> test filtering
+-> verify blocked request
+```
+
+This process is intentionally being developed alongside the technical environment so that the lab improves both my administration skills and my troubleshooting habits.
+
+---
+
+# 18. Process Documentation
+
+As services become more important, I am separating high-level project documentation from repeatable operational procedures.
+
+The README explains:
+
+- what I built
+- why I made particular decisions
+- what problems occurred
+- how the environment was validated
+
+Separate process documentation will be used for procedures that should be repeatable without reconstructing the original project.
+
+Planned documentation includes:
+
+```text
+docs/
+|
++-- adguard-deployment.md
+|
++-- adguard-recovery.md
+|
++-- proxmox-backup-restore.md
+|
++-- troubleshooting/
+    |
+    +-- proxmox-repository-401.md
+    |
+    +-- dns-resolution-failure.md
+```
+
+A process document will generally use the following structure:
+
+```text
+Purpose
+Prerequisites
+Expected configuration
+Procedure
+Validation
+Common failures
+Rollback / recovery
+```
+
+Troubleshooting incident documentation will instead focus on:
+
+```text
+Symptom
+Impact
+Initial observations
+Diagnostic process
+Root cause
+Resolution
+Validation
+Lessons learned
+```
+
+This allows the repository to function as both a project portfolio and a growing technical knowledge base.
+
+---
+
+# 19. Intended Use
+
+The Proxmox host currently serves two purposes:
+
+1. a home infrastructure platform
+2. an IT administration and troubleshooting lab
+
+The first dedicated network service is AdGuard Home at `192.168.1.11`.
+
+The original `debian-lab` container remains a general-purpose environment that can be modified or rebuilt without affecting the DNS service.
+
+Future workloads will continue to be separated according to their purpose and potential impact.
+
+Planned additions include:
+
 - additional Linux containers and VMs
-- a Windows Server lab
+- Windows Server
+- Active Directory Domain Services
+- isolated Windows Server DNS
+- Windows client testing
 - SMB file sharing
-- PC/server backups
-- basic monitoring
+- backups
+- host and service monitoring
 
-I want to keep experimental lab systems separate from services that other devices in the house depend on.
+Experimental Active Directory and Windows DNS services will remain separate from AdGuard Home so that domain experiments can be broken, rebuilt, and reconfigured without affecting normal household DNS.
 
-For example, a Windows Server DNS or Active Directory lab should be something I can break and rebuild without taking down normal household DNS.
-
-The exact design will continue to be documented as I deploy and test each service rather than designing the entire environment in advance.
-
-## Next Steps
-
-- Deploy a dedicated AdGuard Home LXC container
-- Assign or reserve a stable LAN address for DNS services
-- Configure and validate DNS forwarding and filtering
-- Develop a basic Proxmox backup strategy
-- Test LXC backup and restore
-- Create a Windows Server VM for Active Directory experimentation
-- Keep Active Directory/DNS testing isolated from household DNS services
-- Add host and service monitoring
-- Evaluate a future SATA SSD upgrade
-- Document recovery procedures for important services
-
-## Project Log
-
-### September 7, 2026 — Initial Assessment
-
-Received the Lenovo system and performed the initial hardware assessment.
-
-The machine initially appeared to have a no-display problem. I determined that the monitor was connected to the motherboard DisplayPort output while an NVIDIA T1000 was installed. Connecting the display to the T1000 restored video.
-
-Once in Windows, I:
-
-- checked the system configuration with `msinfo32`
-- inspected the existing disk with Disk Management
-- queried installed memory using `Get-CimInstance Win32_PhysicalMemory`
-- queried storage using `Get-CimInstance Win32_DiskDrive`
-- identified two 4 GB Hynix DDR3-1600 DIMMs
-- identified the existing 500 GB Seagate HDD
-- confirmed virtualization support was present but disabled in firmware
-- opened the chassis and inspected the memory, storage, PCIe, and drive layout
-- decided to begin with a low-cost RAM upgrade rather than immediately investing heavily in storage
-
-### September 8, 2026 — Hardware Validation
-
-- upgraded memory from 8 GB to 16 GB DDR3-1600
-- confirmed all memory was detected at 1600 MHz
-- completed Windows Memory Diagnostic with no errors
-- enabled Intel VT-x and VT-d in UEFI
-- verified virtualization support from Windows
-- inspected SMART attributes for the existing Seagate HDD
-- completed an extended SMART self-test without error
-
-### September 9, 2026 — Proxmox Deployment
-
-- installed Proxmox VE bare metal on the existing HDD
-- configured the management interface as `192.168.1.10/24` with `192.168.1.254` as the default gateway
-- corrected enterprise repository configuration for a non-subscription installation
-- updated the Proxmox host and activated the new kernel
-- verified Linux bridge and default routing configuration
-- inspected the Proxmox LVM-thin storage layout
-- downloaded a Debian 13 LXC template
-- created an unprivileged Debian test container
-- validated DHCP, gateway connectivity, Internet routing, and DNS resolution
-- updated the Debian container
-- checked container memory and disk usage
-- relocated the server to its permanent location
-- verified unattended boot and remote Proxmox administration
+The environment will continue to evolve incrementally, with each service tested and documented before additional dependencies are introduced.
 
 ---
 
-## Infrastructure Diagram
+# 20. Next Steps
 
-The diagram below shows the current home lab infrastructure and planned Proxmox workloads. Solid borders represent deployed infrastructure, while dashed borders represent planned services.
+The next stages of the project are:
 
-![Home Lab Infrastructure](diagram/homelab-infrastructure.drawio.svg)
+- create a basic Proxmox backup strategy
+- back up an LXC container
+- perform and document an LXC restore
+- create an AdGuard service recovery procedure
+- intentionally simulate a DNS service failure and diagnose it
+- determine whether AdGuard should eventually be distributed to additional clients through DHCP
+- create a Windows Server VM
+- build an isolated Active Directory environment
+- create a Windows client VM
+- add monitoring for the host and important services
+- investigate SMB file sharing
+- evaluate a future SATA SSD upgrade
+- continue creating troubleshooting scenarios using `debian-lab`
+
+The next priority is not simply adding more services. I want to practice operating, breaking, troubleshooting, recovering, and documenting the services that already exist before significantly expanding the environment.
 
 ---
 
-This project is a work in progress. I will continue updating this README with the actual configurations, commands, problems, troubleshooting steps, and resolutions as additional services are deployed.
+## Skills Practiced
+
+This project currently provides hands-on practice with:
+
+- PC hardware troubleshooting
+- hardware inventory and validation
+- memory installation and testing
+- SMART disk diagnostics
+- UEFI configuration
+- Intel VT-x and VT-d
+- Proxmox VE
+- bare-metal virtualization
+- Linux administration
+- Debian
+- LXC containers
+- Linux bridges
+- static IPv4 addressing
+- DHCP
+- routing
+- DNS
+- TCP/UDP ports
+- AdGuard Home
+- Linux service validation
+- `ip addr`
+- `ip route`
+- `ping`
+- `dig`
+- `ss`
+- `lsblk`
+- `df`
+- `free`
+- package management
+- layered troubleshooting
+- client/server validation
+- technical documentation
+- change validation
+- infrastructure planning
+
+---
+
+This project is a work in progress. The repository will continue to be updated with actual configurations, troubleshooting cases, process documentation, recovery procedures, and additional services as the lab develops.
