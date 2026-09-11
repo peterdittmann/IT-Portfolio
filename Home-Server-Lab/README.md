@@ -758,7 +758,7 @@ default via 192.168.1.254 dev eth0
 192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.11
 ```
 
-![AdGuard LXC network configuration](images/Adguard/adguard-lxc-network-configuration.png)
+![AdGuard LXC network configuration](images/AdGuard/adguard-lxc-network-configuration.png)
 
 I then tested connectivity in stages:
 
@@ -768,7 +768,7 @@ ping -c 4 1.1.1.1
 ping -c 4 google.com
 ```
 
-![AdGuard pre-install connectivity validation](images/Adguard/adguard-preinstall-connectivity-validation.png)
+![AdGuard pre-install connectivity validation](images/AdGuard/adguard-preinstall-connectivity-validation.png)
 
 These tests established that:
 
@@ -836,7 +836,7 @@ I then checked listening sockets again:
 ss -tulpn
 ```
 
-![AdGuard Home service installation validation](images/Adguard/adguard-service-install-validation.png)
+![AdGuard Home service installation validation](images/AdGuard/adguard-service-install-validation.png)
 
 This provided two separate forms of validation:
 
@@ -860,7 +860,7 @@ Web administration:  192.168.1.11:80
 DNS service:         192.168.1.11:53
 ```
 
-![AdGuard Home interface configuration](images/Adguard/adguard-interface-configuration.png)
+![AdGuard Home interface configuration](images/AdGuard/adguard-interface-configuration.png)
 
 Port 53 provides DNS service to clients.
 
@@ -890,7 +890,7 @@ The response identified:
 SERVER: 192.168.1.11#53(192.168.1.11) (UDP)
 ```
 
-![Client DNS query validation](images/Adguard/adguard-client-dns-query-validation.png)
+![Client DNS query validation](images/AdGuard/adguard-client-dns-query-validation.png)
 
 I then checked the AdGuard Home query log.
 
@@ -961,7 +961,7 @@ Custom filtering rules
 Client: 192.168.1.86
 ```
 
-![AdGuard Home filtering validation](images/Adguard/adguard-filtering-query-log.png)
+![AdGuard Home filtering validation](images/AdGuard/adguard-filtering-query-log.png)
 
 The complete test path was therefore:
 
