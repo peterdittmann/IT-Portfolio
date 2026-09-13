@@ -15,7 +15,9 @@ Built a small Windows domain environment using Windows Server 2022 and a Windows
 
 ### Home Server Lab
 Repurposed an older Lenovo workstation into a Proxmox VE home server and virtualization lab. Completed hardware validation, memory upgrade, storage testing, virtualization configuration, Proxmox installation, repository configuration, network validation, and deployment of a Debian LXC container. The lab is being expanded with network services, monitoring, Windows Server, and Active Directory while documenting real troubleshooting and administration tasks.
+
 Current hardware: Intel i5-4570 · 16 GB DDR3 · 500 GB HDD · NVIDIA T1000
+
 Current status: Proxmox VE deployed and running headless · Debian 13 LXC operational · networking/storage validated · additional services in progress
 [View Home Server Lab](./Home-Server-Lab)
 
