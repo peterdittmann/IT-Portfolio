@@ -1,492 +1,297 @@
-# Windows Troubleshooting Playbook
+# IT Support Lab – Windows User, Access & Troubleshooting Scenarios
 
 ## Project Overview
 
-Created a series of controlled Windows troubleshooting scenarios to practise diagnosing common connectivity, DNS, performance, permissions, service, and storage problems.
+Built a Windows support lab to practise common Help Desk and Desktop Support tasks involving user accounts, access permissions, shared resources, Windows services, and system performance.
 
-The focus of this project is the troubleshooting process: identifying the reported symptom, gathering relevant information, narrowing the problem to a likely component, applying a targeted change, and verifying that the original issue is resolved.
+I intentionally created several common end-user problems in a virtual Windows environment, investigated each issue, applied a targeted resolution, and verified that the problem was resolved.
 
-The scenarios were intentionally created in a Windows virtual machine so that I could repeatedly practise a structured approach to technical problems.
+The purpose of the lab was to develop a repeatable troubleshooting process rather than simply applying fixes without understanding the problem.
 
 ---
 
-## Environment & Tools
+## Environment
 
 | Component | Configuration |
 | --- | --- |
 | Host OS | Ubuntu Linux |
 | Virtualization | QEMU/KVM with virt-manager |
-| Guest OS | Windows 10 |
-| Command Line | Command Prompt |
-| Windows Tools | Task Manager, Services, Network Settings, File Explorer |
+| Guest OS | Windows 10|
+| Machine Name | `Win10` |
+| User Types | Administrator and Standard Users |
 
-Commands documented in the scenarios include:
+---
 
-```text
-ipconfig
-ipconfig /renew
-ping
-```
+## Lab Setup
+
+The Windows virtual machine was configured with administrator and standard user accounts along with folders, shared resources, Windows services, and startup applications that could be used to create support scenarios.
+
+The issues in this lab were intentionally introduced so that I could practise identifying symptoms, investigating likely causes, applying changes, and verifying the result.
+
+### User Account Environment
+
+![User Account Management](screenshots/User_Accounts.png)
+
+> Multiple Windows user accounts configured with administrator and standard-user roles for the support scenarios.
+
+---
+
+# Support Scenarios
+
+## 1. Password Reset and Account Access
+
+### Initial Report
+
+A user is unable to sign in because the current password is incorrect or has been forgotten.
+
+### Investigation
+
+Confirmed that the login attempt failed, verified that the user account existed, and confirmed that the Windows system itself was operational.
+
+### Finding
+
+The account was valid, but the correct password was not available to the user.
+
+### Resolution
+
+Used administrator privileges to reset the password for the affected account.
+
+### Verification
+
+Successfully signed in using the affected user account with the updated credentials.
+
+### Evidence
+
+![Password Reset](screenshots/Password_Reset.png)
+
+> Administrator account used to reset user credentials and restore account access.
+
+---
+
+## 2. Folder Permission – Access Denied
+
+### Initial Report
+
+A user receives an **Access Denied** message when attempting to open a folder.
+
+### Investigation
+
+Reviewed the folder's Windows security settings and checked the permissions assigned to the affected user.
+
+### Finding
+
+The user did not have the permissions required to access the folder.
+
+### Resolution
+
+Modified the folder permissions to provide the required access.
+
+### Verification
+
+Tested the folder using the affected account and confirmed that the user could access it successfully.
+
+### Evidence
+
+![Folder Permissions](screenshots/Folder_Permissions.png)
+
+> Windows folder security settings reviewed and modified to restore the required user access.
+
+---
+
+## 3. Shared Folder Access Issue
+
+### Initial Report
+
+A user is unable to access a shared folder.
+
+### Investigation
+
+Reviewed both the folder's sharing configuration and its Windows security permissions.
+
+### Finding
+
+The share permissions and NTFS security permissions did not provide the user with the required access.
+
+### Resolution
+
+Adjusted the sharing and NTFS permissions to provide the appropriate access.
+
+### Verification
+
+Retested the shared resource and confirmed that the affected user could access it successfully.
+
+### Evidence
+
+![Shared Folder Configuration](screenshots/Shared_Folder.png)
+
+> Shared-folder configuration and permissions adjusted to allow the required user access.
+
+---
+
+## 4. Printer Queue and Print Spooler Issue
+
+### Initial Report
+
+Print jobs remain stuck in the print queue and do not complete.
+
+### Investigation
+
+Reviewed the print queue and checked the Windows services involved in processing print jobs.
+
+### Finding
+
+The Print Spooler service required a restart.
+
+### Resolution
+
+Cleared the affected print queue and restarted the Windows Print Spooler service.
+
+### Verification
+
+Confirmed that print jobs could process successfully after the service was restarted.
+
+### Evidence
+
+![Print Spooler Service](screenshots/Print_Spooler.png)
+
+> Print queue cleared and Windows Print Spooler service restarted as part of troubleshooting the printing issue.
+
+---
+
+## 5. Slow Startup and Performance Issue
+
+### Initial Report
+
+The Windows system is experiencing slow startup and reduced performance.
+
+### Investigation
+
+Reviewed the applications configured to launch automatically using Windows Task Manager.
+
+### Finding
+
+Multiple unnecessary applications were configured to run during startup.
+
+### Resolution
+
+Disabled non-essential startup applications.
+
+### Verification
+
+Restarted and retested the system and observed improved startup performance.
+
+### Evidence
+
+![Startup Performance](screenshots/Startup_Performance.png)
+
+> Startup applications reviewed in Task Manager and unnecessary startup items disabled.
 
 ---
 
 # Troubleshooting Method
 
-I used the same general process throughout the scenarios:
+Each scenario followed the same general troubleshooting process:
 
-1. **Identify the problem**  
-   Establish the original symptom and what is not working.
+1. **Identify the reported problem**  
+   Establish what the user or system is experiencing.
 
 2. **Gather information**  
-   Inspect the relevant network configuration, service, permissions, storage, or system state.
+   Check the affected account, configuration, service, permissions, or system state.
 
-3. **Isolate the problem**  
-   Use the available evidence to narrow the issue to a particular component or configuration.
+3. **Narrow down the cause**  
+   Use the available information to determine which component is responsible for the problem.
 
-4. **Apply a targeted fix**  
-   Change the configuration responsible for the problem rather than making unrelated changes.
+4. **Apply a targeted change**  
+   Make the change required to address the identified issue rather than changing unrelated settings.
 
-5. **Verify the resolution**  
-   Retest the original problem and confirm that normal functionality has been restored.
+5. **Verify the result**  
+   Retest the original problem using the affected account, service, or system.
 
-A major goal of the project was to practise using test results to determine the next troubleshooting step instead of immediately applying a possible fix.
+6. **Document the outcome**  
+   Record what caused the problem, what was changed, and how the resolution was verified.
 
----
-
-# Troubleshooting Cases
-
-## Case 1 – No Internet Connectivity
-
-### Initial Report
-
-Internet connectivity is unavailable and websites cannot be accessed.
-
-### Diagnostic Process
-
-Checked the network adapter state and reviewed the Windows IP configuration using:
-
-```text
-ipconfig
-```
-
-The system did not have a valid IP configuration because the network adapter was disabled.
-
-### Finding
-
-The disabled network adapter prevented the system from obtaining the network configuration required for connectivity.
-
-### Resolution
-
-Re-enabled the network adapter and renewed the IP configuration using:
-
-```text
-ipconfig /renew
-```
-
-### Verification
-
-Tested connectivity by pinging an external domain and confirmed that network connectivity had been restored.
-
-### Evidence – Problem Identified
-
-![No Internet Issue](screenshots/project3-no-internet.png)
-
-> Network adapter disabled, resulting in no connectivity.
-
-### Evidence – IP Configuration
-
-![IP Config Failure](screenshots/project3-ipconfig-failure.png)
-
-> System showing no valid IP configuration while the adapter is disabled.
-
-### Evidence – Resolution
-
-![IP Renew](screenshots/project3-ipconfig-renew.png)
-
-> IP configuration renewed after re-enabling the network adapter.
-
-### Evidence – Verification
-
-![Ping Success](screenshots/project3-ping-success.png)
-
-> Successful ping used to verify restored connectivity.
-
----
-
-## Case 2 – DNS Resolution Failure
-
-### Initial Report
-
-Websites cannot be reached even though the system still has network connectivity.
-
-### Diagnostic Process
-
-Tested connectivity in two different ways:
-
-```text
-ping google.com
-ping 8.8.8.8
-```
-
-The IP-address test succeeded while the hostname test failed.
-
-This distinction helped narrow the problem. The system could communicate over the network using an IP address, but it could not successfully resolve a hostname.
-
-### Finding
-
-The DNS server configuration was incorrect, preventing hostname resolution.
-
-### Resolution
-
-Updated the network adapter configuration to use a valid DNS server.
-
-### Verification
-
-Retested connectivity using a domain name and confirmed that hostname resolution was working.
-
-### Evidence – DNS Failure
-
-![DNS Failure](screenshots/project3-dns-failure.png)
-
-> Domain-name resolution failing while IP connectivity remains available.
-
-### Evidence – Connectivity Testing
-
-![Ping Tests](screenshots/project3-ping-tests.png)
-
-> Testing IP and hostname connectivity separately to narrow the issue toward DNS resolution.
-
-### Evidence – DNS Configuration
-
-![DNS Settings](screenshots/project3-dns-settings.png)
-
-> DNS server configuration corrected in the network adapter settings.
-
-### Evidence – Verification
-
-![DNS Success](screenshots/project3-dns-success.png)
-
-> Domain name successfully resolves after correcting the DNS configuration.
-
----
-
-## Case 3 – Slow System Performance
-
-### Initial Report
-
-The Windows system experiences slow startup and reduced performance.
-
-### Diagnostic Process
-
-Reviewed the applications configured to run automatically during startup using Windows Task Manager.
-
-Multiple unnecessary applications were configured to launch with the system.
-
-### Finding
-
-Excessive startup applications were contributing to system resource usage during startup.
-
-### Resolution
-
-Disabled unnecessary startup applications.
-
-### Verification
-
-Retested the system after the changes and observed improved startup performance and reduced system load.
-
-### Evidence – Before
-
-![Startup Before](screenshots/project3-startup-before.png)
-
-> Multiple applications configured to run automatically during startup.
-
-### Evidence – Resolution
-
-![Startup After](screenshots/project3-startup-after.png)
-
-> Non-essential startup applications disabled.
-
-### Evidence – Verification
-
-![Performance Improved](screenshots/project3-taskmanager-performance.png)
-
-> System performance reviewed after startup configuration was changed.
-
----
-
-## Case 4 – Permission Denied
-
-### Initial Report
-
-A user receives an **Access Denied** error when attempting to access a folder.
-
-### Diagnostic Process
-
-Reviewed the folder's Windows security settings and the permissions assigned to the affected user.
-
-The user's permissions did not provide the required folder access.
-
-### Finding
-
-The user lacked the permissions required to access the folder.
-
-### Resolution
-
-Modified the folder permissions to provide the necessary access.
-
-### Verification
-
-Retested access using the affected user and confirmed that the folder could be opened successfully.
-
-### Evidence – Problem Identified
-
-![Access Denied](screenshots/project3-access-denied.png)
-
-> User unable to access the restricted folder.
-
-### Evidence – Permission Review
-
-![Permissions Before](screenshots/project3-permissions-before.png)
-
-> Folder security settings reviewed to identify the missing access.
-
-### Evidence – Resolution
-
-![Permissions After](screenshots/project3-permissions-after.png)
-
-> Required permissions applied to the folder.
-
-### Evidence – Verification
-
-![Folder Access](screenshots/project3-folder-access.png)
-
-> Successful folder access after the permissions were updated.
-
----
-
-## Case 5 – Print Spooler Failure
-
-### Initial Report
-
-Print jobs remain stuck in the queue and do not complete.
-
-### Diagnostic Process
-
-Checked the printer queue and reviewed the Windows services responsible for printing.
-
-The Print Spooler service was stopped.
-
-### Finding
-
-The stopped Print Spooler service prevented print jobs from being processed.
-
-### Resolution
-
-Restarted the Print Spooler service.
-
-### Verification
-
-Confirmed that the Print Spooler was running and that print functionality had been restored.
-
-### Evidence – Problem Identified
-
-![Spooler Stopped](screenshots/project3-spooler-stopped.png)
-
-> Windows Print Spooler service not running.
-
-### Evidence – Resolution
-
-![Spooler Restart](screenshots/project3-spooler-restart.png)
-
-> Print Spooler service restarted.
-
-### Evidence – Verification
-
-![Spooler Running](screenshots/project3-spooler-running.png)
-
-> Print Spooler running after the change.
-
----
-
-## Case 6 – Low Disk Space
-
-### Initial Report
-
-The system reports warnings that available disk space is critically low.
-
-### Diagnostic Process
-
-Reviewed storage usage in Windows system settings to determine whether available storage was causing the warning.
-
-The disk was filled with unnecessary files.
-
-### Finding
-
-Insufficient free disk space was triggering the storage warning.
-
-### Resolution
-
-Removed unnecessary files to recover storage capacity.
-
-### Verification
-
-Reviewed storage again and confirmed that available disk space had increased and the warning was resolved.
-
-### Evidence – Problem Identified
-
-![Disk Warning](screenshots/project3-disk-warning.png)
-
-> Windows reporting critically low available storage.
-
-### Evidence – Storage Review
-
-![Disk Full](screenshots/project3-disk-full.png)
-
-> Storage usage reviewed while investigating the low-space warning.
-
-### Evidence – Cleanup
-
-![Cleanup](screenshots/project3-cleanup.png)
-
-> Unnecessary files removed to recover storage capacity.
-
-### Evidence – Verification
-
-![Disk Recovered](screenshots/project3-disk-recovered.png)
-
-> Available storage increased after cleanup.
-
----
-
-# Diagnostic Reasoning
-
-These scenarios helped reinforce that similar user symptoms can require different troubleshooting paths.
-
-For example, the two network scenarios initially involve an inability to reach network resources, but the tests identify different problems.
-
-### Connectivity Failure
-
-```text
-No Internet Connectivity
-        ↓
-Check Network Adapter
-        ↓
-Adapter Disabled
-        ↓
-Enable Adapter
-        ↓
-Renew IP Configuration
-        ↓
-Test Connectivity
-        ↓
-Connectivity Restored
-```
-
-### DNS Failure
-
-```text
-Website / Hostname Fails
-        ↓
-Test Hostname
-        ↓
-Hostname Fails
-        ↓
-Test Known IP Address
-        ↓
-IP Connectivity Works
-        ↓
-Investigate DNS
-        ↓
-Correct DNS Configuration
-        ↓
-Retest Hostname
-        ↓
-Name Resolution Restored
-```
-
-The DNS scenario was particularly useful because successful IP connectivity provided evidence that the system still had network connectivity. The failed hostname test narrowed the investigation toward name resolution rather than treating the problem as a complete network failure.
-
----
-
-# Skills Practised
-
-## Windows Troubleshooting
-
-- Windows 10
-- Command Prompt
-- Windows Network Settings
-- Windows Services
-- Task Manager
-- File and folder security settings
-- Storage management
-
-## Networking
-
-- IP configuration
-- Connectivity testing
-- DNS troubleshooting
-- Differentiating IP connectivity from hostname resolution
-
-## User & System Support
-
-- Folder permission troubleshooting
-- Print Spooler troubleshooting
-- Startup performance troubleshooting
-- Low disk-space investigation
-- Configuration validation
-
-## Troubleshooting Process
-
-- Identifying symptoms
-- Gathering relevant system information
-- Narrowing the affected component
-- Applying targeted changes
-- Retesting the original problem
-- Verifying successful resolution
-- Documenting the troubleshooting process
+This process helped reinforce the importance of verifying a solution instead of assuming that making a configuration change resolved the original problem.
 
 ---
 
 # Support Relevance
 
-This project provides hands-on practice with several types of problems commonly encountered in Windows support environments:
+The scenarios in this lab represent several types of tasks commonly associated with entry-level Windows support:
 
-- Loss of network connectivity
-- DNS resolution failures
-- Slow system startup
-- User access and permission problems
-- Windows service failures
-- Low disk space
+- User account and password support
+- Access troubleshooting
+- File and folder permissions
+- Shared-resource troubleshooting
+- Windows service troubleshooting
+- Printer and print-queue troubleshooting
+- Startup and performance troubleshooting
+- Administrator and standard-user accounts
+- Testing changes from the affected user's perspective
+- Documenting troubleshooting and resolution steps
 
-The environment is a controlled lab rather than professional production experience. The value of the project is in practising a repeatable diagnostic process and documenting how test results were used to narrow each problem before applying a resolution.
+This is a simulated lab environment rather than professional Help Desk experience. It gives me a controlled environment where I can practise troubleshooting Windows problems and develop a consistent process for diagnosing and resolving user issues.
+
+---
+
+# Skills Practised
+
+## Windows Support
+
+- Windows 10/11
+- Windows user administration
+- Administrator and standard-user accounts
+- Windows Task Manager
+- Windows services
+- Print Spooler troubleshooting
+
+## Access & Permissions
+
+- Password resets
+- User account access
+- File and folder permissions
+- NTFS permissions
+- Shared-folder configuration
+- Share permissions
+
+## Troubleshooting
+
+- Gathering symptoms
+- Reviewing system configuration
+- Isolating likely causes
+- Applying targeted changes
+- Testing from the affected user's perspective
+- Verifying resolution
+- Technical documentation
 
 ---
 
 # What I Learned
 
-The main lesson from this project was that troubleshooting is more effective when each test is used to narrow the problem.
+The most important lesson from this lab was that resolving a support issue requires more than finding a setting that appears incorrect.
 
-The DNS scenario demonstrated this clearly. Testing an IP address separately from a hostname helped distinguish a name-resolution problem from a complete connectivity failure.
+The original problem needs to be reproduced or understood, the relevant configuration needs to be investigated, and the result needs to be tested after a change is made.
 
-The other scenarios reinforced the same general process: inspect the part of the system related to the reported symptom, identify the configuration or service responsible, make a targeted change, and then retest the original issue.
+The shared-folder scenario also reinforced the difference between **share permissions and NTFS permissions**. Access to a shared resource can depend on both layers, so troubleshooting only one set of permissions may not explain why a user cannot access the resource.
 
-The project also reinforced the importance of verification. A configuration change is not enough on its own; the original problem should be tested again to confirm that normal functionality has actually been restored.
+The scenarios also reinforced the value of testing a resolution from the affected user's perspective. An administrative change is not complete simply because it was successfully applied; the original problem should be retested to confirm that the user can perform the required task.
 
 ---
 
-# Future Development
+# Next Steps
 
-As my home server and Windows lab environments expand, I plan to add troubleshooting case studies based on problems encountered while building and maintaining those systems.
+I plan to expand this support work as the Windows environment in my Home Server Lab develops.
 
-Future cases will be documented only after the work is performed, with an emphasis on:
+Future scenarios will be documented only as they are completed and may include:
 
-- Initial symptoms
-- Information gathered
-- Diagnostic tests performed
-- Possible causes considered
-- Evidence used to narrow the issue
-- Resolution
-- Verification
-- Lessons that can be reused when troubleshooting similar problems
+- Active Directory password resets and account lockouts
+- Domain-user access problems
+- Security-group membership and resource access
+- DNS-related domain connectivity issues
+- Group Policy troubleshooting
+- File-server and shared-folder support
+- Windows service failures
+- Additional printer and peripheral troubleshooting
+- Basic PowerShell-assisted troubleshooting
+- Support scenarios requiring escalation rather than direct resolution
 
-This will allow the playbook to develop from controlled troubleshooting exercises into a broader record of problems encountered and resolved while working with Windows, networking, virtualization, and other lab infrastructure.
+For future scenarios, I also plan to document more of the diagnostic reasoning behind each step, including what information was gathered, what possible causes were considered, and why a particular troubleshooting path was selected.
