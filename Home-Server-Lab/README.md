@@ -9,7 +9,7 @@
 - [Debian LXC](#8-first-lxc-container)
 - [AdGuard Home DNS](#9-adguard-home-dns-deployment)
 - [Troubleshooting Method](#17-troubleshooting-method)
-- [Next Steps](#20-next-steps)
+- [Next Priority](#20-next-priority)
 
 ## Project Status
 
