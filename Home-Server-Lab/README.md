@@ -1268,14 +1268,14 @@ The environment will continue to evolve incrementally, with each service tested 
 
 ---
 
-## Next Priority
+## 20-0. Next Priority
 
 1. Establish and test Proxmox/LXC backup and restore.
 2. Document AdGuard service recovery.
 3. Deploy Windows Server VM.
 4. Begin isolated AD DS/DNS environment.
 
-## Later Expansion
+## 20-1. Later Expansion
 
 - Windows client VM
 - Monitoring
