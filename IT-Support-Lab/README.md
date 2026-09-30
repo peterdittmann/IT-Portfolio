@@ -16,7 +16,7 @@ The purpose of the lab was to develop a repeatable troubleshooting process rathe
 | --- | --- |
 | Host OS | Ubuntu Linux |
 | Virtualization | QEMU/KVM with virt-manager |
-| Guest OS | Windows 10/11 |
+| Guest OS | Windows 10 |
 | Machine Name | `Win10` |
 | User Types | Administrator and Standard Users |
 
