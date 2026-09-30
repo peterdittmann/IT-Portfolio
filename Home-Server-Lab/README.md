@@ -1268,25 +1268,21 @@ The environment will continue to evolve incrementally, with each service tested 
 
 ---
 
-# 20. Next Steps
+## Next Priority
 
-The next stages of the project are:
+1. Establish and test Proxmox/LXC backup and restore.
+2. Document AdGuard service recovery.
+3. Deploy Windows Server VM.
+4. Begin isolated AD DS/DNS environment.
 
-- create a basic Proxmox backup strategy
-- back up an LXC container
-- perform and document an LXC restore
-- create an AdGuard service recovery procedure
-- intentionally simulate a DNS service failure and diagnose it
-- determine whether AdGuard should eventually be distributed to additional clients through DHCP
-- create a Windows Server VM
-- build an isolated Active Directory environment
-- create a Windows client VM
-- add monitoring for the host and important services
-- investigate SMB file sharing
-- evaluate a future SATA SSD upgrade
-- continue creating troubleshooting scenarios using `debian-lab`
+## Later Expansion
 
-The next priority is not simply adding more services. I want to practice operating, breaking, troubleshooting, recovering, and documenting the services that already exist before significantly expanding the environment.
+- Windows client VM
+- Monitoring
+- SMB file services
+- Additional DNS failure testing
+- Additional Linux workloads
+- Evaluate SSD upgrade
 
 ---
 
