@@ -1,3 +1,36 @@
+## Project Navigation
+
+- [Current Environment](#current-environment)
+- [Initial Hardware Troubleshooting](#1-initial-hardware-assessment)
+- [Hardware Validation & Upgrades](#3-upgrade-decisions-and-hardware-validation)
+- [Proxmox Deployment](#4-proxmox-ve-deployment)
+- [Proxmox Troubleshooting](#5-repository-troubleshooting-and-host-updates)
+- [Networking](#6-proxmox-networking)
+- [Debian LXC](#8-first-lxc-container)
+- [AdGuard Home DNS](#9-adguard-home-dns-deployment)
+- [Troubleshooting Method](#17-troubleshooting-method)
+- [Next Steps](#20-next-steps)
+
+## Project Status
+
+**Status:** Active / In Development
+
+**Currently deployed:**
+- Proxmox VE 9.2 bare-metal host
+- 16 GB validated system memory
+- Debian 13 general-purpose LXC
+- Dedicated Debian 13 / AdGuard Home LXC
+- Static AdGuard DNS service at `192.168.1.11`
+- Headless LAN administration
+
+**Planned:**
+- Backup and restore testing
+- Windows Server VM
+- Isolated Active Directory environment
+- Windows client VM
+- Monitoring
+- SMB file services
+
 # Lenovo Home Server Lab
 
 I was given an older Lenovo desktop and wanted to determine whether it could be repurposed as a home server and virtualization lab rather than leaving it unused.
