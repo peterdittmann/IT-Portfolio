@@ -1,309 +1,492 @@
-# Troubleshooting Playbook
+# Windows Troubleshooting Playbook
 
-## Project Summary
+## Project Overview
 
-Simulated real-world IT support scenarios within a Windows environment to diagnose and resolve common user issues including network failures, DNS problems, system performance degradation, permission errors, service failures, and storage limitations. Applied a structured troubleshooting methodology to identify root causes, implement targeted fixes, and verify successful resolution.
+Created a series of controlled Windows troubleshooting scenarios to practise diagnosing common connectivity, DNS, performance, permissions, service, and storage problems.
 
-This project reflects real help desk workflows where issues must be diagnosed efficiently, resolved accurately, and documented clearly for future reference.
+The focus of this project is the troubleshooting process: identifying the reported symptom, gathering relevant information, narrowing the problem to a likely component, applying a targeted change, and verifying that the original issue is resolved.
 
----
-
-## Objective
-
-The goal of this project was to simulate real-world IT support scenarios and demonstrate the ability to diagnose, resolve, and document common technical issues using a structured troubleshooting methodology.
+The scenarios were intentionally created in a Windows virtual machine so that I could repeatedly practise a structured approach to technical problems.
 
 ---
 
-## Environment
+## Environment & Tools
 
-- Host OS: Ubuntu Linux
-- Virtualization: QEMU/KVM (virt-manager)
-- Guest OS: Windows 10
-- Tools Used: Command Prompt, Task Manager, Services, Network Settings
+| Component | Configuration |
+| --- | --- |
+| Host OS | Ubuntu Linux |
+| Virtualization | QEMU/KVM with virt-manager |
+| Guest OS | Windows 10 |
+| Command Line | Command Prompt |
+| Windows Tools | Task Manager, Services, Network Settings, File Explorer |
 
----
+Commands documented in the scenarios include:
 
-## Key Issues Resolved:
-
-- DNS resolution failure (IP working, hostname failing)
-- NTFS permission issues blocking access
-- Print spooler service failure
-- Network connectivity validation
-
----
-
-## Tools Used:
-
-- Command Prompt (ping, ipconfig)
-- services.msc
-- File Explorer (permissions)
+```text
+ipconfig
+ipconfig /renew
+ping
+```
 
 ---
 
-## Troubleshooting Methodology
+# Troubleshooting Method
 
-Each issue was approached using a structured troubleshooting process:
+I used the same general process throughout the scenarios:
 
-1. Identify the problem  
-2. Gather relevant system information  
-3. Isolate the root cause  
-4. Apply a targeted fix  
-5. Verify resolution  
+1. **Identify the problem**  
+   Establish the original symptom and what is not working.
+
+2. **Gather information**  
+   Inspect the relevant network configuration, service, permissions, storage, or system state.
+
+3. **Isolate the problem**  
+   Use the available evidence to narrow the issue to a particular component or configuration.
+
+4. **Apply a targeted fix**  
+   Change the configuration responsible for the problem rather than making unrelated changes.
+
+5. **Verify the resolution**  
+   Retest the original problem and confirm that normal functionality has been restored.
+
+A major goal of the project was to practise using test results to determine the next troubleshooting step instead of immediately applying a possible fix.
 
 ---
 
-## Scenarios
+# Troubleshooting Cases
 
----
+## Case 1 – No Internet Connectivity
 
-### Issue 1: No Internet Connectivity
+### Initial Report
 
-**Symptoms:**  
-User reported an issue where internet connectivity was unavailable and inability to access websites.
+Internet connectivity is unavailable and websites cannot be accessed.
 
-**Investigation:**  
-Checked network adapter status and verified IP configuration using `ipconfig`.
+### Diagnostic Process
 
-**Cause:**  
-Network adapter was disabled, preventing system from obtaining an IP address.
+Checked the network adapter state and reviewed the Windows IP configuration using:
 
-**Resolution:**  
-Re-enabled the network adapter and renewed the IP configuration using `ipconfig /renew`.
+```text
+ipconfig
+```
 
-**Verification:**  
-Confirmed successful internet connectivity by pinging an external domain.
+The system did not have a valid IP configuration because the network adapter was disabled.
 
-#### Problem Identified
+### Finding
+
+The disabled network adapter prevented the system from obtaining the network configuration required for connectivity.
+
+### Resolution
+
+Re-enabled the network adapter and renewed the IP configuration using:
+
+```text
+ipconfig /renew
+```
+
+### Verification
+
+Tested connectivity by pinging an external domain and confirmed that network connectivity had been restored.
+
+### Evidence – Problem Identified
+
 ![No Internet Issue](screenshots/project3-no-internet.png)
 
 > Network adapter disabled, resulting in no connectivity.
 
-#### Investigation
+### Evidence – IP Configuration
+
 ![IP Config Failure](screenshots/project3-ipconfig-failure.png)
 
-> System showing no valid IP configuration.
+> System showing no valid IP configuration while the adapter is disabled.
 
-#### Resolution
+### Evidence – Resolution
+
 ![IP Renew](screenshots/project3-ipconfig-renew.png)
 
-> IP configuration renewed after enabling adapter.
+> IP configuration renewed after re-enabling the network adapter.
 
-#### Verification
+### Evidence – Verification
+
 ![Ping Success](screenshots/project3-ping-success.png)
 
-> Successful ping confirms restored connectivity.
+> Successful ping used to verify restored connectivity.
 
 ---
 
-### Issue 2: DNS Resolution Failure
+## Case 2 – DNS Resolution Failure
 
-**Symptoms:**  
-User reported that websites would not load despite having an active internet connection.
+### Initial Report
 
-**Investigation:**  
-Tested connectivity using `ping google.com` and `ping 8.8.8.8` to isolate DNS vs network issue.
+Websites cannot be reached even though the system still has network connectivity.
 
-**Cause:**  
-Incorrect DNS server configuration prevented hostname resolution.
+### Diagnostic Process
 
-**Resolution:**  
-Updated DNS settings to a valid DNS server.
+Tested connectivity in two different ways:
 
-**Verification:**  
-Confirmed successful DNS resolution by pinging a domain name.
+```text
+ping google.com
+ping 8.8.8.8
+```
 
-#### Problem Identified
+The IP-address test succeeded while the hostname test failed.
+
+This distinction helped narrow the problem. The system could communicate over the network using an IP address, but it could not successfully resolve a hostname.
+
+### Finding
+
+The DNS server configuration was incorrect, preventing hostname resolution.
+
+### Resolution
+
+Updated the network adapter configuration to use a valid DNS server.
+
+### Verification
+
+Retested connectivity using a domain name and confirmed that hostname resolution was working.
+
+### Evidence – DNS Failure
+
 ![DNS Failure](screenshots/project3-dns-failure.png)
 
-> Domain name resolution failing while IP connectivity remains functional.
+> Domain-name resolution failing while IP connectivity remains available.
 
-#### Investigation
+### Evidence – Connectivity Testing
+
 ![Ping Tests](screenshots/project3-ping-tests.png)
 
-> Ping to IP successful, domain name fails indicating DNS issue.
+> Testing IP and hostname connectivity separately to narrow the issue toward DNS resolution.
 
-#### Resolution
+### Evidence – DNS Configuration
+
 ![DNS Settings](screenshots/project3-dns-settings.png)
 
-> DNS server corrected in network adapter settings.
+> DNS server configuration corrected in the network adapter settings.
 
-#### Verification
+### Evidence – Verification
+
 ![DNS Success](screenshots/project3-dns-success.png)
 
-> Domain successfully resolves after DNS fix.
+> Domain name successfully resolves after correcting the DNS configuration.
 
 ---
 
-### Issue 3: Slow System Performance
+## Case 3 – Slow System Performance
 
-**Symptoms:**  
-User reported slow system startup and reduced performance.
+### Initial Report
 
-**Investigation:**  
-Reviewed startup applications in Task Manager.
+The Windows system experiences slow startup and reduced performance.
 
-**Cause:**  
-Excessive startup applications consuming system resources.
+### Diagnostic Process
 
-**Resolution:**  
-Disabled unnecessary startup programs.
+Reviewed the applications configured to run automatically during startup using Windows Task Manager.
 
-**Verification:**  
-Observed improved startup performance and reduced system load.
+Multiple unnecessary applications were configured to launch with the system.
 
-#### Problem Identified
+### Finding
+
+Excessive startup applications were contributing to system resource usage during startup.
+
+### Resolution
+
+Disabled unnecessary startup applications.
+
+### Verification
+
+Retested the system after the changes and observed improved startup performance and reduced system load.
+
+### Evidence – Before
+
 ![Startup Before](screenshots/project3-startup-before.png)
 
-> Multiple startup applications enabled.
+> Multiple applications configured to run automatically during startup.
 
-#### Resolution
+### Evidence – Resolution
+
 ![Startup After](screenshots/project3-startup-after.png)
 
-> Non-essential applications disabled.
+> Non-essential startup applications disabled.
 
-#### Verification
+### Evidence – Verification
+
 ![Performance Improved](screenshots/project3-taskmanager-performance.png)
 
-> Reduced system load after optimization.
+> System performance reviewed after startup configuration was changed.
 
 ---
 
-### Issue 4: Permission Denied Access
+## Case 4 – Permission Denied
 
-**Symptoms:**  
-User received "Access Denied" error when attempting to access a folder.
+### Initial Report
 
-**Investigation:**  
-Reviewed folder security settings and user permissions.
+A user receives an **Access Denied** error when attempting to access a folder.
 
-**Cause:**  
-User lacked appropriate permissions to access the folder.
+### Diagnostic Process
 
-**Resolution:**  
-Modified folder permissions to grant necessary access.
+Reviewed the folder's Windows security settings and the permissions assigned to the affected user.
 
-**Verification:**  
-User successfully accessed the folder after permissions were updated.
+The user's permissions did not provide the required folder access.
 
-#### Problem Identified
+### Finding
+
+The user lacked the permissions required to access the folder.
+
+### Resolution
+
+Modified the folder permissions to provide the necessary access.
+
+### Verification
+
+Retested access using the affected user and confirmed that the folder could be opened successfully.
+
+### Evidence – Problem Identified
+
 ![Access Denied](screenshots/project3-access-denied.png)
 
-> User unable to access restricted folder.
+> User unable to access the restricted folder.
 
-#### Investigation
+### Evidence – Permission Review
+
 ![Permissions Before](screenshots/project3-permissions-before.png)
 
-> Missing permissions identified in security settings.
+> Folder security settings reviewed to identify the missing access.
 
-#### Resolution
+### Evidence – Resolution
+
 ![Permissions After](screenshots/project3-permissions-after.png)
 
-> Correct permissions applied.
+> Required permissions applied to the folder.
 
-#### Verification
+### Evidence – Verification
+
 ![Folder Access](screenshots/project3-folder-access.png)
 
-> User successfully accessing folder.
+> Successful folder access after the permissions were updated.
 
 ---
 
-### Issue 5: Print Spooler Failure
+## Case 5 – Print Spooler Failure
 
-**Symptoms:**  
-User reported print jobs stuck in queue and unable to print.
+### Initial Report
 
-**Investigation:**  
-Checked system services and printer queue.
+Print jobs remain stuck in the queue and do not complete.
 
-**Cause:**  
-Print Spooler service was stopped.
+### Diagnostic Process
 
-**Resolution:**  
+Checked the printer queue and reviewed the Windows services responsible for printing.
+
+The Print Spooler service was stopped.
+
+### Finding
+
+The stopped Print Spooler service prevented print jobs from being processed.
+
+### Resolution
+
 Restarted the Print Spooler service.
 
-**Verification:**  
-Print functionality restored and jobs processed successfully.
+### Verification
 
-#### Problem Identified
+Confirmed that the Print Spooler was running and that print functionality had been restored.
+
+### Evidence – Problem Identified
+
 ![Spooler Stopped](screenshots/project3-spooler-stopped.png)
 
-> Print Spooler service not running.
+> Windows Print Spooler service not running.
 
-#### Resolution
+### Evidence – Resolution
+
 ![Spooler Restart](screenshots/project3-spooler-restart.png)
 
-> Service restarted successfully.
+> Print Spooler service restarted.
 
-#### Verification
+### Evidence – Verification
+
 ![Spooler Running](screenshots/project3-spooler-running.png)
 
-> Service running and ready for print jobs.
+> Print Spooler running after the change.
 
 ---
 
-### Issue 6: Disk Space Issue
+## Case 6 – Low Disk Space
 
-**Symptoms:**  
-User reported system warnings about low disk space.
+### Initial Report
 
-**Investigation:**  
-Checked storage usage in system settings.
+The system reports warnings that available disk space is critically low.
 
-**Cause:**  
-Disk filled with unnecessary files.
+### Diagnostic Process
 
-**Resolution:**  
-Removed unnecessary files and freed up storage.
+Reviewed storage usage in Windows system settings to determine whether available storage was causing the warning.
 
-**Verification:**  
-Confirmed available disk space increased and warnings resolved.
+The disk was filled with unnecessary files.
 
-#### Problem Identified
+### Finding
+
+Insufficient free disk space was triggering the storage warning.
+
+### Resolution
+
+Removed unnecessary files to recover storage capacity.
+
+### Verification
+
+Reviewed storage again and confirmed that available disk space had increased and the warning was resolved.
+
+### Evidence – Problem Identified
+
 ![Disk Warning](screenshots/project3-disk-warning.png)
 
-> System indicating critically low storage.
+> Windows reporting critically low available storage.
 
-#### Investigation
+### Evidence – Storage Review
+
 ![Disk Full](screenshots/project3-disk-full.png)
 
-> Disk usage analysis showing full storage.
+> Storage usage reviewed while investigating the low-space warning.
 
-#### Resolution
+### Evidence – Cleanup
+
 ![Cleanup](screenshots/project3-cleanup.png)
 
-> Files removed and storage cleared.
+> Unnecessary files removed to recover storage capacity.
 
-#### Verification
+### Evidence – Verification
+
 ![Disk Recovered](screenshots/project3-disk-recovered.png)
 
-> Storage successfully freed.
+> Available storage increased after cleanup.
 
 ---
 
-## Key Skills Demonstrated
+# Diagnostic Reasoning
 
-- Windows troubleshooting and diagnostics  
-- Network troubleshooting (IP, DNS)  
-- System performance optimization  
-- File and folder permission management  
-- Service troubleshooting (Print Spooler)  
-- Disk space management  
-- Structured troubleshooting methodology  
-- Technical documentation  
+These scenarios helped reinforce that similar user symptoms can require different troubleshooting paths.
+
+For example, the two network scenarios initially involve an inability to reach network resources, but the tests identify different problems.
+
+### Connectivity Failure
+
+```text
+No Internet Connectivity
+        ↓
+Check Network Adapter
+        ↓
+Adapter Disabled
+        ↓
+Enable Adapter
+        ↓
+Renew IP Configuration
+        ↓
+Test Connectivity
+        ↓
+Connectivity Restored
+```
+
+### DNS Failure
+
+```text
+Website / Hostname Fails
+        ↓
+Test Hostname
+        ↓
+Hostname Fails
+        ↓
+Test Known IP Address
+        ↓
+IP Connectivity Works
+        ↓
+Investigate DNS
+        ↓
+Correct DNS Configuration
+        ↓
+Retest Hostname
+        ↓
+Name Resolution Restored
+```
+
+The DNS scenario was particularly useful because successful IP connectivity provided evidence that the system still had network connectivity. The failed hostname test narrowed the investigation toward name resolution rather than treating the problem as a complete network failure.
 
 ---
 
-## Key Takeaways
+# Skills Practised
 
-This project developed practical experience in diagnosing and resolving common IT support issues using a structured approach. It reinforced the importance of identifying root causes, applying targeted fixes, and verifying outcomes before closing a support task.
+## Windows Troubleshooting
+
+- Windows 10
+- Command Prompt
+- Windows Network Settings
+- Windows Services
+- Task Manager
+- File and folder security settings
+- Storage management
+
+## Networking
+
+- IP configuration
+- Connectivity testing
+- DNS troubleshooting
+- Differentiating IP connectivity from hostname resolution
+
+## User & System Support
+
+- Folder permission troubleshooting
+- Print Spooler troubleshooting
+- Startup performance troubleshooting
+- Low disk-space investigation
+- Configuration validation
+
+## Troubleshooting Process
+
+- Identifying symptoms
+- Gathering relevant system information
+- Narrowing the affected component
+- Applying targeted changes
+- Retesting the original problem
+- Verifying successful resolution
+- Documenting the troubleshooting process
 
 ---
 
-## Resume Bullet Points
+# Support Relevance
 
-- Simulated real-world IT support scenarios to diagnose and resolve network, system, and access-related issues  
-- Troubleshot connectivity issues including IP configuration and DNS failures  
-- Resolved system performance issues by analyzing and optimizing startup processes  
-- Managed file permissions and resolved access control issues  
-- Diagnosed and restored services such as Print Spooler  
-- Documented troubleshooting workflows using structured methodology  
+This project provides hands-on practice with several types of problems commonly encountered in Windows support environments:
+
+- Loss of network connectivity
+- DNS resolution failures
+- Slow system startup
+- User access and permission problems
+- Windows service failures
+- Low disk space
+
+The environment is a controlled lab rather than professional production experience. The value of the project is in practising a repeatable diagnostic process and documenting how test results were used to narrow each problem before applying a resolution.
+
+---
+
+# What I Learned
+
+The main lesson from this project was that troubleshooting is more effective when each test is used to narrow the problem.
+
+The DNS scenario demonstrated this clearly. Testing an IP address separately from a hostname helped distinguish a name-resolution problem from a complete connectivity failure.
+
+The other scenarios reinforced the same general process: inspect the part of the system related to the reported symptom, identify the configuration or service responsible, make a targeted change, and then retest the original issue.
+
+The project also reinforced the importance of verification. A configuration change is not enough on its own; the original problem should be tested again to confirm that normal functionality has actually been restored.
+
+---
+
+# Future Development
+
+As my home server and Windows lab environments expand, I plan to add troubleshooting case studies based on problems encountered while building and maintaining those systems.
+
+Future cases will be documented only after the work is performed, with an emphasis on:
+
+- Initial symptoms
+- Information gathered
+- Diagnostic tests performed
+- Possible causes considered
+- Evidence used to narrow the issue
+- Resolution
+- Verification
+- Lessons that can be reused when troubleshooting similar problems
+
+This will allow the playbook to develop from controlled troubleshooting exercises into a broader record of problems encountered and resolved while working with Windows, networking, virtualization, and other lab infrastructure.
