@@ -165,6 +165,17 @@ These tests confirmed that the virtual network adapter, Proxmox
 bridge, local LAN connectivity, and DNS resolution were functioning
 before further server configuration.
 
+### Initial Server Configuration
+
+After installation, the server was renamed from its automatically generated
+Windows hostname to `DC-01` before installing Active Directory Domain Services.
+
+The system time zone was changed to Mountain Time (US & Canada) to match the
+physical location of the lab environment.
+
+Windows Update was run before adding server roles to establish a patched
+baseline configuration.
+
 ### Deployment
 
 Document the significant configuration decisions and installation
