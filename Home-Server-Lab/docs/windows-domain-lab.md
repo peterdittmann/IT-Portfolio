@@ -40,6 +40,31 @@ Services.
 Proxmox is operational and existing Linux containers have
 validated the host's storage, networking, and vmbr0 bridge.
 
+### VM Creation
+
+- VM ID: 102
+- VM name: dc01
+- Proxmox node: pve
+- High availability: Disabled
+
+The server was given the functional hostname `dc01` because it is
+intended to become the first domain controller in the Windows lab.
+High availability was not configured because this is a single-node
+homelab rather than a clustered Proxmox environment.
+
+The VM was provisioned with 2 vCPUs, 4 GB RAM, and a 64 GiB
+virtual disk. Resources were intentionally limited because the
+physical host has 4 CPU cores and 16 GB RAM and must also support
+the existing Linux containers and a future Windows client VM.
+
+Modern virtual hardware was selected using q35, UEFI, TPM 2.0,
+VirtIO SCSI storage, and a VirtIO network adapter. The VM was
+connected to the existing LAN through the Proxmox `vmbr0` bridge.
+
+The VM was created without immediately starting it so that the
+Windows VirtIO driver ISO could be attached before operating
+system installation.
+
 ### VM Configuration
 
 | Setting | Configuration | Reason |
@@ -52,6 +77,21 @@ validated the host's storage, networking, and vmbr0 bridge.
 | Disk | TBD | |
 | Network bridge | vmbr0 | Connect VM to LAN |
 | Network adapter | TBD | |
+| Machine type | q35 | Modern virtual hardware platform |
+| Firmware | OVMF (UEFI) | Provides modern UEFI firmware |
+| EFI disk | local-lvm | Persists UEFI configuration |
+| SCSI controller | VirtIO SCSI single | Paravirtualized storage controller |
+| TPM | TPM 2.0 | Provides virtual TPM support |
+| QEMU Guest Agent | Enabled | Allows host/guest management integration |
+| System disk | 64 GiB, SCSI | Provides sufficient capacity for Windows Server, updates and AD lab services |
+| Storage backend | local-lvm | Uses the Proxmox VM storage pool |
+| SCSI controller | VirtIO SCSI single | Provides paravirtualized storage rather than legacy IDE emulation |
+| Discard | Enabled | Allows unused blocks to be reclaimed by thin-provisioned storage |
+| CPU | 1 socket, 2 cores (2 vCPUs) | Provides sufficient CPU resources for the small Windows Server lab while preserving host capacity for other guests |
+| Memory | 4096 MiB (4 GB) | Provides adequate memory for the lab domain controller while preserving host resources for other guests |
+| Network bridge | vmbr0 | Connects the VM to the existing LAN through the Proxmox virtual bridge |
+| Network adapter | VirtIO | Uses a paravirtualized network interface designed for virtualized guests |
+| VLAN | None | Lab currently uses the existing untagged LAN |
 
 ### Deployment
 
