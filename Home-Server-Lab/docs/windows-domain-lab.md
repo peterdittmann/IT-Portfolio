@@ -99,6 +99,37 @@ driver installation media.*
 | Network adapter | VirtIO | Uses a paravirtualized network interface designed for virtualized guests |
 | VLAN | None | Lab currently uses the existing untagged LAN |
 
+### Windows Server Installation:
+
+Windows Server 2022 Standard Evaluation (Desktop Experience) was selected
+for the domain controller. Standard provides the required Active Directory
+and DNS functionality for the lab, while Desktop Experience provides the
+graphical administration tools useful for practising common Windows Server
+support and administration workflows.
+
+#### VirtIO Storage Driver
+
+During Windows Server installation, Windows Setup did not initially
+detect the 64 GiB virtual system disk.
+
+The disk had already been verified in the Proxmox hardware
+configuration, indicating that the virtual disk itself existed. The VM
+used a VirtIO SCSI controller, so the likely cause was that Windows
+Setup did not have the required VirtIO storage driver loaded.
+
+The VirtIO driver ISO had been attached to the VM before installation.
+The Windows Server 2022 x64 VirtIO SCSI driver was loaded from:
+
+`vioscsi/2k22/amd64`
+
+After loading the driver, Windows Setup successfully detected the
+64 GiB virtual disk.
+
+![Windows Setup with detected VirtIO disk](../images/windows-domain/windows-setup-storage-driver-loaded.png)
+
+*Windows Setup detecting the 64 GiB virtual system disk after the
+Windows Server 2022 VirtIO SCSI driver was loaded.*
+
 ### Deployment
 
 Document the significant configuration decisions and installation
