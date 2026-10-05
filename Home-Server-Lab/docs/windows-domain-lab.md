@@ -176,6 +176,35 @@ physical location of the lab environment.
 Windows Update was run before adding server roles to establish a patched
 baseline configuration.
 
+### Static Network Configuration
+
+Before configuring Active Directory Domain Services, the Windows Server VM
+was assigned a static IPv4 address so that domain services would not depend
+on a dynamically assigned DHCP address.
+
+| Setting | Configuration |
+|---|---|
+| Hostname | DC-01 |
+| IPv4 address | 192.168.1.12 |
+| Subnet mask | 255.255.255.0 (/24) |
+| Default gateway | 192.168.1.254 |
+| DNS server | 192.168.1.11 (AdGuard Home) |
+| DHCP | Disabled |
+
+Before assigning the address, the existing DHCP scope and current network
+configuration were reviewed and the proposed static address was tested for
+an obvious address conflict.
+
+After configuration, connectivity was validated by:
+
+- Confirming the static configuration with `ipconfig /all`
+- Successfully reaching the default gateway at `192.168.1.254`
+- Successfully reaching the AdGuard DNS server at `192.168.1.11`
+- Successfully resolving an external hostname with `nslookup`
+
+The server retained LAN and DNS connectivity after moving from DHCP to a
+static IPv4 configuration.
+
 ### Deployment
 
 Document the significant configuration decisions and installation
