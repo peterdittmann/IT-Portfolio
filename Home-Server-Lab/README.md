@@ -8,9 +8,10 @@
 - [Networking](#6-proxmox-networking)
 - [Debian LXC](#8-first-lxc-container)
 - [AdGuard Home DNS](#9-adguard-home-dns-deployment)
-- [Troubleshooting Method](#17-troubleshooting-method)
-- [Next Priority](#20-0-next-priority)
-- [Later Expansion](#20-1-later-expansion)
+- [Windows Server VM](#17-windows-server-vm-deployment)
+- [Troubleshooting Method](#18-troubleshooting-method)
+- [Next Priority](#21-0-next-priority)
+- [Later Expansion](#21-1-later-expansion)
   
 ## Project Status
 
@@ -22,13 +23,15 @@
 - Debian 13 general-purpose LXC
 - Dedicated Debian 13 / AdGuard Home LXC
 - Static AdGuard DNS service at `192.168.1.11`
+- Windows Server 2022 Standard Evaluation VM
+- `DC-01` at `192.168.1.12/24`
 - Headless LAN administration
 
 **Planned:**
-- Backup and restore testing
-- Windows Server VM
-- Isolated Active Directory environment
+- Active Directory Domain Services
+- Windows Server DNS
 - Windows client VM
+- Backup and restore testing
 - Monitoring
 - SMB file services
 
@@ -36,9 +39,9 @@
 
 I was given an older Lenovo desktop and wanted to determine whether it could be repurposed as a home server and virtualization lab rather than leaving it unused.
 
-The project began with troubleshooting a no-display condition and progressed through hardware inventory, memory expansion, storage health testing, virtualization configuration, bare-metal Proxmox deployment, Linux container administration, and deployment of a dedicated AdGuard Home DNS service.
+The project began with troubleshooting a no-display condition and progressed through hardware inventory, memory expansion, storage health testing, virtualization configuration, bare-metal Proxmox deployment, Linux container administration, deployment of a dedicated AdGuard Home DNS service, and deployment of a Windows Server virtual machine.
 
-The system now runs headless on my home network and is administered remotely through Proxmox. It currently hosts a general-purpose Debian LXC for Linux experimentation and a dedicated AdGuard Home LXC for local DNS resolution and filtering.
+The system now runs headless on my home network and is administered remotely through Proxmox. It currently hosts a general-purpose Debian LXC for Linux experimentation, a dedicated AdGuard Home LXC for local DNS resolution and filtering, and a Windows Server 2022 VM being prepared for an isolated Active Directory lab.
 
 The purpose of this project is not only to deploy services, but to practice the complete process of:
 
@@ -46,7 +49,7 @@ The purpose of this project is not only to deploy services, but to practice the 
 - troubleshooting faults systematically
 - planning infrastructure changes
 - implementing and validating configurations
-- administering Linux systems
+- administering Linux and Windows systems
 - understanding networking and service dependencies
 - documenting technical decisions
 - developing repeatable troubleshooting and recovery procedures
@@ -76,6 +79,9 @@ This README documents the actual configuration, troubleshooting, decisions, comm
 | CT 101 address | `192.168.1.11/24` static |
 | AdGuard DNS | TCP/UDP 53 |
 | AdGuard administration | HTTP 80, LAN only |
+| VM 102 | `DC-01` — Windows Server 2022 Standard Evaluation |
+| VM 102 address | `192.168.1.12/24` static |
+| VM 102 role | Windows domain lab — AD DS/DNS not yet installed |
 | Administration | Headless via Proxmox web interface |
 
 ---
@@ -1084,13 +1090,176 @@ Lenovo Proxmox host
                  +---- CT 100: debian-lab
                  |
                  +---- CT 101: adguard
+                 |
+                 +---- VM 102: DC-01
 ```
 
 This completed the original objective of converting the unused desktop into a remotely administered virtualization host.
 
 ---
 
-# 17. Troubleshooting Method
+
+# 17. Windows Server VM Deployment
+
+To expand the lab toward Windows administration and end-user support scenarios, I deployed a Windows Server virtual machine on the existing Proxmox host.
+
+The long-term purpose of the VM is to provide an isolated environment for practising Active Directory Domain Services, Windows DNS, user and group administration, Group Policy, permissions, domain joins, and common Windows support scenarios.
+
+Active Directory has **not** yet been installed. The current milestone establishes a known-good Windows Server baseline before introducing those additional services.
+
+## VM Configuration
+
+| Setting | Configuration |
+| --- | --- |
+| VM ID | 102 |
+| VM name | `DC-01` |
+| Operating system | Windows Server 2022 Standard Evaluation |
+| Interface | Desktop Experience |
+| Memory | 4 GB |
+| System disk | 64 GB |
+| Storage | `local-lvm` |
+| Network bridge | `vmbr0` |
+| Network adapter | Red Hat VirtIO Ethernet Adapter |
+| IPv4 | `192.168.1.12/24` |
+| Default gateway | `192.168.1.254` |
+| Current DNS | `192.168.1.11` |
+
+The VM name `DC-01` reflects its intended future role as the first domain controller in the isolated Windows lab. At this stage it remains a standalone Windows Server system.
+
+---
+
+## VirtIO Driver Troubleshooting
+
+Windows Server installation introduced an additional virtualization-specific troubleshooting requirement.
+
+The VM was configured to use VirtIO devices rather than relying entirely on legacy emulated hardware. Windows did not initially have all required VirtIO drivers available, including the virtual network adapter driver.
+
+After loading the appropriate VirtIO driver, Device Manager identified the adapter as:
+
+```text
+Red Hat VirtIO Ethernet Adapter
+```
+
+This was validated before treating the lack of network connectivity as an IP, routing, or DNS configuration problem.
+
+---
+
+## Initial Network Validation
+
+The server initially received its network configuration through DHCP.
+
+I inspected the configuration using:
+
+```cmd
+ipconfig /all
+```
+
+This confirmed that the VirtIO network adapter was operating and that the VM had received an address on the existing LAN.
+
+I then tested the network in stages.
+
+### Default Gateway
+
+```cmd
+ping 192.168.1.254
+```
+
+The gateway responded successfully.
+
+### Existing DNS Server
+
+```cmd
+ping 192.168.1.11
+```
+
+The AdGuard container responded successfully.
+
+### DNS Resolution
+
+```cmd
+nslookup google.com
+```
+
+The lookup returned valid DNS results.
+
+These tests established a known-good network baseline before changing the VM from DHCP to static addressing.
+
+---
+
+## Windows Update
+
+Before adding server roles, I ran Windows Update and allowed the available updates to complete.
+
+After installation and required restarts, Windows Update reported that the system was up to date.
+
+Updating the standalone server before adding Active Directory reduces the number of unrelated changes being introduced during the later domain-controller deployment.
+
+---
+
+## Static IPv4 Configuration
+
+Before assigning a static address, I checked the existing DHCP configuration.
+
+The router's DHCP pool begins at:
+
+```text
+192.168.1.64
+```
+
+The address selected for the Windows Server was:
+
+```text
+192.168.1.12
+```
+
+This places the server outside the DHCP pool and avoids relying on a changing DHCP lease.
+
+The resulting configuration is:
+
+```text
+Hostname:         DC-01
+IPv4 address:     192.168.1.12
+Subnet mask:      255.255.255.0
+Default gateway:  192.168.1.254
+DNS server:       192.168.1.11
+DHCP:             Disabled
+```
+
+After applying the configuration, I repeated the network tests:
+
+```cmd
+ping 192.168.1.254
+ping 192.168.1.11
+nslookup google.com
+ipconfig /all
+```
+
+The gateway remained reachable, the existing DNS server remained reachable, DNS resolution succeeded, and `ipconfig /all` confirmed that DHCP was disabled and `192.168.1.12` was assigned to the server.
+
+This established the Windows Server VM as a stable network endpoint before installing Active Directory.
+
+---
+
+## Current Windows Server State
+
+```text
+Windows Server installation       PASS
+VirtIO network adapter            PASS
+Windows Update                    PASS
+Hostname DC-01                    PASS
+Static IPv4                       PASS
+Default gateway connectivity      PASS
+AdGuard connectivity              PASS
+External DNS resolution           PASS
+AD DS installed                   NOT YET
+Domain controller                 NOT YET
+```
+
+The next step is to preserve this known-good standalone server state before installing Active Directory Domain Services and Windows DNS.
+
+---
+
+# 18. Troubleshooting Method
 
 As the lab has developed, I have started using a repeatable troubleshooting process rather than immediately changing configurations when something fails.
 
@@ -1175,11 +1344,25 @@ Validate network first
 -> verify blocked request
 ```
 
+### Windows Server Networking
+
+```text
+Verify network adapter
+-> inspect DHCP configuration
+-> test gateway
+-> test existing DNS server
+-> test DNS resolution
+-> identify unused static address outside DHCP pool
+-> configure static IPv4
+-> repeat connectivity tests
+-> verify DHCP disabled
+```
+
 This process is intentionally being developed alongside the technical environment so that the lab improves both my administration skills and my troubleshooting habits.
 
 ---
 
-# 18. Process Documentation
+# 19. Process Documentation
 
 As services become more important, I am separating high-level project documentation from repeatable operational procedures.
 
@@ -1196,6 +1379,8 @@ Planned documentation includes:
 
 ```text
 docs/
+|
++-- windows-domain-lab.md
 |
 +-- adguard-deployment.md
 |
@@ -1239,7 +1424,7 @@ This allows the repository to function as both a project portfolio and a growing
 
 ---
 
-# 19. Intended Use
+# 20. Intended Use
 
 The Proxmox host currently serves two purposes:
 
@@ -1248,20 +1433,22 @@ The Proxmox host currently serves two purposes:
 
 The first dedicated network service is AdGuard Home at `192.168.1.11`.
 
-The original `debian-lab` container remains a general-purpose environment that can be modified or rebuilt without affecting the DNS service.
+The Windows Server VM `DC-01` is deployed at `192.168.1.12` and is being prepared for the isolated Windows domain lab.
+
+The original `debian-lab` container remains a general-purpose environment that can be modified or rebuilt without affecting the DNS service or Windows lab.
 
 Future workloads will continue to be separated according to their purpose and potential impact.
 
 Planned additions include:
 
-- additional Linux containers and VMs
-- Windows Server
 - Active Directory Domain Services
 - isolated Windows Server DNS
 - Windows client testing
+- Active Directory users, groups, and Group Policy
 - SMB file sharing
 - backups
 - host and service monitoring
+- additional Linux containers and VMs
 
 Experimental Active Directory and Windows DNS services will remain separate from AdGuard Home so that domain experiments can be broken, rebuilt, and reconfigured without affecting normal household DNS.
 
@@ -1269,18 +1456,23 @@ The environment will continue to evolve incrementally, with each service tested 
 
 ---
 
-## 20-0. Next Priority
+## 21-0. Next Priority
 
-1. Establish and test Proxmox/LXC backup and restore.
-2. Document AdGuard service recovery.
-3. Deploy Windows Server VM.
-4. Begin isolated AD DS/DNS environment.
+1. Create a known-good pre-AD baseline of `DC-01`.
+2. Install Active Directory Domain Services and Windows DNS.
+3. Promote `DC-01` to the lab domain controller.
+4. Validate AD and DNS before adding a Windows client.
+5. Deploy a Windows client VM and join it to the domain.
+6. Establish and test Proxmox/LXC backup and restore.
 
-## 20-1. Later Expansion
+## 21-1. Later Expansion
 
-- Windows client VM
+- Active Directory users, groups, and OUs
+- Group Policy
+- SMB file services and NTFS permissions
+- Windows client support scenarios
+- AD/DNS troubleshooting scenarios
 - Monitoring
-- SMB file services
 - Additional DNS failure testing
 - Additional Linux workloads
 - Evaluate SSD upgrade
@@ -1299,10 +1491,13 @@ This project currently provides hands-on practice with:
 - Intel VT-x and VT-d
 - Proxmox VE
 - bare-metal virtualization
+- virtual machine provisioning
 - Linux administration
+- Windows Server administration
 - Debian
 - LXC containers
 - Linux bridges
+- VirtIO devices and drivers
 - static IPv4 addressing
 - DHCP
 - routing
@@ -1310,6 +1505,11 @@ This project currently provides hands-on practice with:
 - TCP/UDP ports
 - AdGuard Home
 - Linux service validation
+- Windows network configuration
+- Windows Device Manager
+- Windows Update
+- `ipconfig`
+- `nslookup`
 - `ip addr`
 - `ip route`
 - `ping`
