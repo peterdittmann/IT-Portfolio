@@ -130,6 +130,41 @@ After loading the driver, Windows Setup successfully detected the
 *Windows Setup detecting the 64 GiB virtual system disk after the
 Windows Server 2022 VirtIO SCSI driver was loaded.*
 
+### Base Operating System Installation
+
+Windows Server 2022 Standard Evaluation (Desktop Experience) was
+successfully installed on the virtual system disk.
+
+The server was booted from the newly installed operating system and
+the local Administrator account was used to access the Windows
+Server desktop.
+
+Before installing Active Directory Domain Services, the standalone
+server was validated to establish a known-good baseline.
+
+#### Initial Network Validation
+
+After installing the VirtIO network driver, Windows recognized the
+virtual network interface as a Red Hat VirtIO Ethernet Adapter.
+
+The server received an IPv4 configuration through DHCP:
+
+- IPv4 address: `192.168.1.64/24`
+- Default gateway: `192.168.1.254`
+- IPv4 DNS server: `192.168.1.11`
+
+Connectivity was validated in stages:
+
+- The default gateway at `192.168.1.254` responded successfully with
+  no packet loss.
+- The existing AdGuard DNS server at `192.168.1.11` responded
+  successfully with no packet loss.
+- An external hostname was successfully resolved with `nslookup`.
+
+These tests confirmed that the virtual network adapter, Proxmox
+bridge, local LAN connectivity, and DNS resolution were functioning
+before further server configuration.
+
 ### Deployment
 
 Document the significant configuration decisions and installation
