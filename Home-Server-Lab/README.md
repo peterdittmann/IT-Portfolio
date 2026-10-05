@@ -9,6 +9,7 @@
 - [Debian LXC](#8-first-lxc-container)
 - [AdGuard Home DNS](#9-adguard-home-dns-deployment)
 - [Windows Server VM](#17-windows-server-vm-deployment)
+- [Detailed Windows Domain Lab](docs/windows-domain-lab.md)
 - [Troubleshooting Method](#18-troubleshooting-method)
 - [Next Priority](#21-0-next-priority)
 - [Later Expansion](#21-1-later-expansion)
@@ -1100,6 +1101,11 @@ This completed the original objective of converting the unused desktop into a re
 
 
 # 17. Windows Server VM Deployment
+
+> **Detailed documentation:** [Windows Domain Lab](docs/windows-domain-lab.md)
+>
+> This document contains the full Windows Server deployment, VirtIO troubleshooting,
+> network validation, static addressing, and the ongoing Active Directory lab.
 
 To expand the lab toward Windows administration and end-user support scenarios, I deployed a Windows Server virtual machine on the existing Proxmox host.
 
