@@ -65,6 +65,12 @@ The VM was created without immediately starting it so that the
 Windows VirtIO driver ISO could be attached before operating
 system installation.
 
+![DC01 virtual hardware configuration](../images/windows-domain/dc01-proxmox-hardware.png)
+
+*DC01 virtual hardware configuration in Proxmox, including UEFI/TPM,
+VirtIO storage and networking, and separate Windows Server and VirtIO
+driver installation media.*
+
 ### VM Configuration
 
 | Setting | Configuration | Reason |
