@@ -419,21 +419,23 @@ A configuration change should not be assumed successful simply because the setti
 
 ## Objective
 
-Convert the known-good standalone Windows Server into the first domain controller for the lab.
+Promote the validated standalone Windows Server into the first domain controller
+for the lab and establish working Active Directory-integrated DNS.
 
-Phase 2 will include:
+## Domain Design
 
-- planning the lab domain namespace
-- configuring the DNS design for Active Directory
-- installing Active Directory Domain Services
-- installing and configuring Windows DNS as required
-- promoting `DC-01` to a domain controller
-- validating Active Directory health
-- validating DNS records and name resolution
-- documenting the resulting domain configuration
+| Setting | Configuration |
+|---|---|
+| Forest root domain | `ad.seasonandsavour.com` |
+| NetBIOS domain | `AD` |
+| Domain controller | `DC-01` |
+| DNS Server | Enabled |
+| Global Catalog | Enabled |
+| Forest functional level | Windows Server 2016 |
+| Domain functional level | Windows Server 2016 |
+| DNS delegation | Not created |
 
-The Windows client will not be joined to the domain until the domain controller and DNS configuration have been independently validated.
-
+...
 ---
 
 ## Current Status
