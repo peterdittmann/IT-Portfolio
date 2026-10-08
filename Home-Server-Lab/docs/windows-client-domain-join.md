@@ -52,7 +52,7 @@ A `Get-CimInstance Win32_ComputerSystem` query returned `Invalid class (0x800410
 | Post-restart secure channel `True` | [client-10-secure-channel-verified.png](../images/client-10-secure-channel-verified.png) |
 | CIM error retained for later investigation | [client-09-cim-verification-error.png](../images/client-09-cim-verification-error.png) |
 
-Additional baseline and DNS screenshots are in [`../images/`](../images/); see the evidence manifest for source filenames and hashes.
+Additional baseline and DNS screenshots are in [`../images/`](../images/);
 
 ## Skills demonstrated
 Windows 11 VM deployment; VirtIO networking; DHCP and TCP/IP validation; DNS A/SRV record troubleshooting; IPv4/IPv6 DNS resolver investigation; Windows domain joining; PowerShell trust verification; documenting an unresolved diagnostic separately from a successful service validation.
