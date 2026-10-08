@@ -1542,7 +1542,6 @@ This is **independent homelab work**, not production administration. A domain-us
 
 - [Windows Server 2022 AD DS deployment and validation](docs/windows-server-ad-ds-deployment.md)
 - [Windows 11 client, DNS investigation and domain join](docs/windows-client-domain-join.md)
-- [Screenshot provenance and hashes](images/EVIDENCE-MANIFEST.md)
 
 ![Domain join accepted](images/client-08-domain-join-restart-required.png)
 
