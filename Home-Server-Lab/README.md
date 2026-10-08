@@ -9,7 +9,7 @@
 - [Debian LXC](#8-first-lxc-container)
 - [AdGuard Home DNS](#9-adguard-home-dns-deployment)
 - [Windows Server VM](#17-windows-server-vm-deployment)
-- [Detailed Windows Domain Lab](docs/windows-domain-lab.md)
+- [AD DS and Windows 11 Client](#22-active-directory-and-windows-11-client-current-milestone)
 - [Troubleshooting Method](#18-troubleshooting-method)
 - [Next Priority](#21-0-next-priority)
 - [Later Expansion](#21-1-later-expansion)
@@ -25,13 +25,12 @@
 - Dedicated Debian 13 / AdGuard Home LXC
 - Static AdGuard DNS service at `192.168.1.11`
 - Windows Server 2022 Standard Evaluation VM
-- `DC-01` at `192.168.1.12/24`
+- `DC-01` at `192.168.1.12/24`, running AD DS and Windows DNS
+- Windows 11 Pro VM 103 (`win11-client` / `WIN11-CLIENT`), domain joined and trust verified
 - Headless LAN administration
 
 **Planned:**
-- Active Directory Domain Services
-- Windows Server DNS
-- Windows client VM
+- Domain-user sign-in, OUs, groups and Group Policy
 - Backup and restore testing
 - Monitoring
 - SMB file services
@@ -40,9 +39,9 @@
 
 I was given an older Lenovo desktop and wanted to determine whether it could be repurposed as a home server and virtualization lab rather than leaving it unused.
 
-The project began with troubleshooting a no-display condition and progressed through hardware inventory, memory expansion, storage health testing, virtualization configuration, bare-metal Proxmox deployment, Linux container administration, deployment of a dedicated AdGuard Home DNS service, and deployment of a Windows Server virtual machine.
+The project began with troubleshooting a no-display condition and progressed through hardware inventory, memory expansion, storage health testing, virtualization configuration, bare-metal Proxmox deployment, Linux container administration, deployment of a dedicated AdGuard Home DNS service, deployment of a Windows Server virtual machine, promotion to a domain controller, and domain joining a Windows 11 client.
 
-The system now runs headless on my home network and is administered remotely through Proxmox. It currently hosts a general-purpose Debian LXC for Linux experimentation, a dedicated AdGuard Home LXC for local DNS resolution and filtering, and a Windows Server 2022 VM being prepared for an isolated Active Directory lab.
+The system now runs headless on my home network and is administered remotely through Proxmox. It currently hosts a general-purpose Debian LXC for Linux experimentation, a dedicated AdGuard Home LXC for local DNS resolution and filtering, a Windows Server 2022 AD DS/DNS domain controller, and a Windows 11 Pro client joined to the domain.
 
 The purpose of this project is not only to deploy services, but to practice the complete process of:
 
@@ -82,14 +81,17 @@ This README documents the actual configuration, troubleshooting, decisions, comm
 | AdGuard administration | HTTP 80, LAN only |
 | VM 102 | `DC-01` — Windows Server 2022 Standard Evaluation |
 | VM 102 address | `192.168.1.12/24` static |
-| VM 102 role | Windows domain lab — AD DS/DNS not yet installed |
+| VM 102 role | AD DS, Windows DNS, first domain controller for `ad.seasonandsavour.com` |
+| VM 103 | `win11-client` — Windows 11 Pro, 4 GiB RAM |
+| VM 103 networking | DHCP `192.168.1.64/24` observed; DNS configured for AD server `192.168.1.12` |
+| VM 103 state | Joined to AD domain; `Test-ComputerSecureChannel` returned `True` |
 | Administration | Headless via Proxmox web interface |
 
 ---
 
 ## Infrastructure Diagram
 
-The diagram below shows the current home lab infrastructure and planned Proxmox workloads.
+The existing diagram may not yet show the newly deployed domain controller and Windows 11 client; use the Current Environment table as the authoritative deployed-state reference.
 
 Solid borders represent deployed infrastructure, while dashed borders represent planned services.
 
@@ -1102,11 +1104,6 @@ This completed the original objective of converting the unused desktop into a re
 
 # 17. Windows Server VM Deployment
 
-> **Detailed documentation:** [Windows Domain Lab](docs/windows-domain-lab.md)
->
-> This document contains the full Windows Server deployment, VirtIO troubleshooting,
-> network validation, static addressing, and the ongoing Active Directory lab.
-
 To expand the lab toward Windows administration and end-user support scenarios, I deployed a Windows Server virtual machine on the existing Proxmox host.
 
 The long-term purpose of the VM is to provide an isolated environment for practising Active Directory Domain Services, Windows DNS, user and group administration, Group Policy, permissions, domain joins, and common Windows support scenarios.
@@ -1449,14 +1446,14 @@ Planned additions include:
 
 - Active Directory Domain Services
 - isolated Windows Server DNS
-- Windows client testing
+- Domain-user sign-in testing
 - Active Directory users, groups, and Group Policy
 - SMB file sharing
 - backups
 - host and service monitoring
 - additional Linux containers and VMs
 
-Experimental Active Directory and Windows DNS services will remain separate from AdGuard Home so that domain experiments can be broken, rebuilt, and reconfigured without affecting normal household DNS.
+Active Directory and Windows DNS run on DC-01 separately from AdGuard Home. Domain-client DNS needs to point to the domain controller; household DNS continues to use AdGuard.
 
 The environment will continue to evolve incrementally, with each service tested and documented before additional dependencies are introduced.
 
@@ -1464,12 +1461,12 @@ The environment will continue to evolve incrementally, with each service tested 
 
 ## 21-0. Next Priority
 
-1. Create a known-good pre-AD baseline of `DC-01`.
-2. Install Active Directory Domain Services and Windows DNS.
-3. Promote `DC-01` to the lab domain controller.
-4. Validate AD and DNS before adding a Windows client.
-5. Deploy a Windows client VM and join it to the domain.
-6. Establish and test Proxmox/LXC backup and restore.
+1. Capture the `WIN11-CLIENT` computer object in Active Directory Users and Computers.
+2. Create a standard domain test user and validate interactive Windows 11 sign-in.
+3. Create small OUs and groups, then apply and verify one Group Policy.
+4. Build a test SMB share with deliberate NTFS/share permission scenarios.
+5. Document support incidents and verify DNS/forwarder behaviour.
+6. Test backup and restore before expanding further.
 
 ## 21-1. Later Expansion
 
@@ -1534,3 +1531,19 @@ This project currently provides hands-on practice with:
 ---
 
 This project is a work in progress. The repository will continue to be updated with actual configurations, troubleshooting cases, process documentation, recovery procedures, and additional services as the lab develops.
+
+## 22. Active Directory and Windows 11 Client — Current Milestone
+
+The lab now includes Windows Server 2022 (`DC-01`, VM 102, `192.168.1.12`) as the first domain controller and DNS server for `ad.seasonandsavour.com`. Windows 11 Pro (`WIN11-CLIENT`, VM 103) was deployed with a VirtIO network adapter and joined to the domain.
+
+Client-side troubleshooting distinguished successful ping and explicit AD DNS lookups from failed default DNS lookups through ISP IPv6 resolvers. After correcting client DNS selection, the AD domain A record and LDAP SRV record resolved through `192.168.1.12`. The domain join was accepted and, following restart, `Test-ComputerSecureChannel` returned `True`.
+
+This is **independent homelab work**, not production administration. A domain-user interactive sign-in and a screenshot of the AD computer object are still pending. An unrelated CIM `Invalid class` query error remains open.
+
+- [Windows Server 2022 AD DS deployment and validation](docs/windows-server-ad-ds-deployment.md)
+- [Windows 11 client, DNS investigation and domain join](docs/windows-client-domain-join.md)
+- [Screenshot provenance and hashes](images/EVIDENCE-MANIFEST.md)
+
+![Domain join accepted](images/client-08-domain-join-restart-required.png)
+
+![Post-restart secure channel validated](images/client-10-secure-channel-verified.png)
