@@ -5,7 +5,7 @@
 **Platform:** Proxmox VE 9.2  
 **Status:** AD DS and DNS deployed and validated
 
-## Objective
+## What I set out to do
 
 Expand the existing Proxmox home server into a Microsoft Windows domain environment for practising entry-level IT support and Windows administration. This phase covered Windows Server 2022 deployment, baseline networking, Active Directory Domain Services, DNS, and validation of the new forest.
 
