@@ -1,63 +1,1522 @@
-# IT Support Portfolio
+# Lenovo Home Server Lab
 
-I'm Peter, a Calgary-based chef working towards my first IT support role.
+I was given an older Lenovo desktop and figured it was worth seeing whether I could turn it into something useful. At first it wouldn't display anything, so the project started with basic hardware troubleshooting rather than a server installation.
 
-I've spent years working in busy kitchens, where a problem rarely arrives at a convenient time. You have to figure out what's happening, decide what matters first, communicate with the people around you, and get things working again. That's the part of the job I've always enjoyed, and it's a big part of what drew me towards IT.
+Once I got it running, I tested the hardware, upgraded the RAM, and installed Proxmox. Since then I've added Debian containers, AdGuard Home, Windows Server 2022 with Active Directory and DNS, and a Windows 11 client joined to the domain.
 
-I completed my **CompTIA A+** in April 2026. Outside of work, I've been building a homelab and working through Windows, Linux, networking, and troubleshooting projects. This portfolio is where I keep track of what I've actually done, including the things that didn't work on the first try.
+The useful part for me has been figuring out what went wrong along the way: the display connection, missing VirtIO drivers during Windows setup, and DNS queries being sent to the wrong resolver. I've kept the commands, checks, and screenshots here so I can explain not only what I configured, but how I knew it worked.
 
-These are **personal projects and lab exercises**, not paid IT administration experience.
+This is a personal homelab, not a production environment.
 
-## Projects
+## Where things stand
 
-### [Home Server and Windows Domain Lab](./Home-Server-Lab)
+**Running:** Proxmox VE 9.2; Debian 13 lab container; AdGuard Home container (`192.168.1.11`); Windows Server 2022 domain controller `DC-01` (`192.168.1.12`); Windows 11 Pro client `WIN11-CLIENT` joined to `ad.seasonandsavour.com`. The client's domain secure-channel test returned `True`.
 
-I started with an older Lenovo desktop that wasn't displaying anything on the monitor. After sorting out the hardware issue, I upgraded its memory, installed Proxmox, and began using it as a home server.
+**Next:** test sign-in with a standard domain user, build a small OU/group structure, apply and verify a Group Policy, work through shared-folder permissions, and test backup/recovery. I also have a separate Windows CIM/WMI error to investigate; the domain join itself passed verification.
 
-It's now running Debian containers, AdGuard Home, a Windows Server 2022 domain controller, and a Windows 11 Pro client. I built the Active Directory domain `ad.seasonandsavour.com`, joined the client, and verified its secure channel.
+## Read the Windows work
 
-One of the more useful problems came during the client setup: it could reach the domain controller, but normal DNS lookups were going to the ISP's IPv6 resolvers instead of my AD DNS server. Working through that made the difference between *network connectivity* and *service discovery* much clearer to me.
+- [Windows Server 2022 and Active Directory deployment](docs/windows-server-ad-ds-deployment.md)
+- [Windows 11 client, DNS troubleshooting, and domain join](docs/windows-client-domain-join.md)
+- [Screenshot evidence and source manifest](images/EVIDENCE-MANIFEST.md)
 
-**What I've worked with:** Proxmox VE, Windows Server 2022, Windows 11 Pro, Active Directory Domain Services, DNS, PowerShell, VirtIO drivers, Debian Linux, and basic network troubleshooting.
+## Project navigation
 
-**Still to do:** domain-user sign-in, OUs and groups, Group Policy, shared-folder permissions, backup and restore testing, and more support scenarios.
+- [Current environment](#current-environment)
+- [Initial hardware assessment](#1-initial-hardware-assessment)
+- [Proxmox deployment](#4-proxmox-ve-deployment)
+- [Networking](#6-proxmox-networking)
+- [AdGuard Home DNS](#9-adguard-home-dns-deployment)
+- [Windows Server deployment](#17-windows-server-vm-deployment)
+- [Current Windows domain milestone](#22-active-directory-and-windows-11-client-current-milestone)
 
-[Read the Home Server Lab](./Home-Server-Lab) · [Windows Server deployment](./Home-Server-Lab/docs/windows-server-ad-ds-deployment.md) · [Windows client domain join](./Home-Server-Lab/docs/windows-client-domain-join.md)
+---
 
-### [Active Directory Lab](./Active-Directory-Lab)
+## Current Environment
 
-My earlier Active Directory practice focused on getting comfortable with accounts, groups, permissions, and common Windows support tasks. I'm now continuing that work in the Proxmox-based domain above, where I can test changes on a real client VM and document the results.
+| Component | Current Configuration |
+| --- | --- |
+| Host | Lenovo 10A8S00200 |
+| CPU | Intel Core i5-4570 |
+| CPU configuration | 4 cores / 4 threads |
+| Memory | 16 GB DDR3-1600 |
+| Storage | 500 GB Seagate HDD |
+| Hypervisor | Proxmox VE 9.2 |
+| Kernel | `7.0.14-16-pve` |
+| Management IP | `192.168.1.10/24` |
+| Default gateway | `192.168.1.254` |
+| LAN subnet | `192.168.1.0/24` |
+| Virtual bridge | `vmbr0` |
+| CT 100 | `debian-lab` — Debian 13 general-purpose lab |
+| CT 100 networking | DHCP via `vmbr0` |
+| CT 101 | `adguard` — Debian 13 / AdGuard Home |
+| CT 101 address | `192.168.1.11/24` static |
+| AdGuard DNS | TCP/UDP 53 |
+| AdGuard administration | HTTP 80, LAN only |
+| VM 102 | `DC-01` — Windows Server 2022 Standard Evaluation |
+| VM 102 address | `192.168.1.12/24` static |
+| VM 102 role | AD DS, Windows DNS, first domain controller for `ad.seasonandsavour.com` |
+| VM 103 | `win11-client` — Windows 11 Pro, 4 GiB RAM |
+| VM 103 networking | DHCP `192.168.1.64/24` observed; DNS configured for AD server `192.168.1.12` |
+| VM 103 state | Joined to AD domain; `Test-ComputerSecureChannel` returned `True` |
+| Administration | Headless via Proxmox web interface |
 
-### [Secure Hosting with Docker and Cloudflare](./Secure-Hosting-Docker)
+---
 
-I wanted a way to host an application for friends without exposing services directly through my home router. I used Docker on Ubuntu with persistent storage and Cloudflare Tunnel for remote access, then tested connectivity and recovery.
+## Infrastructure Diagram
 
-### [Linux Hardening Lab](./Linux-Hardening-Lab)
+The existing diagram may not yet show the newly deployed domain controller and Windows 11 client; use the Current Environment table as the authoritative deployed-state reference.
 
-A practice environment for working through SSH settings, user accounts, firewall rules, and reducing unnecessary services. I documented what I changed and how I checked the results.
+Solid borders represent deployed infrastructure, while dashed borders represent planned services.
 
-### [IT Support Lab](./IT-Support-Lab)
+![Home Lab Infrastructure](diagram/homelab-infrastructure.drawio.svg)
 
-Practice with everyday support problems: account access, passwords, shared folders, permissions, printers, and Windows troubleshooting. The aim is to get comfortable diagnosing an issue rather than just memorising a fix.
+---
 
-### [Troubleshooting Playbook](./Troubleshooting-Playbook)
+# 1. Initial Hardware Assessment
 
-My notes on how to approach common problems involving connectivity, DNS, permissions, Windows services, and system performance. I use them to keep my troubleshooting consistent and to remind myself what to check next.
+## Starting Hardware
 
-## Tools I've used in labs and personal projects
+| Component | Configuration |
+| --- | --- |
+| System | Lenovo 10A8S00200 |
+| CPU | Intel Core i5-4570 @ 3.20 GHz |
+| CPU configuration | 4 cores / 4 logical processors |
+| Memory | 8 GB DDR3-1600 |
+| Memory configuration | 2 x 4 GB Hynix |
+| Storage | 500 GB Seagate HDD |
+| Drive model | ST500DM002-1SB10A |
+| GPU | NVIDIA T1000 |
+| Firmware | UEFI |
+| Original operating system | Windows 10 Pro |
 
-- **Windows:** Windows 10/11, Windows Server 2022, Active Directory, PowerShell, Command Prompt
-- **Linux and virtualization:** Ubuntu, Debian, Proxmox VE, QEMU/KVM, Docker
-- **Networking:** TCP/IP, DHCP, DNS, ICMP, Cloudflare Tunnel, UFW
-- **Support tasks:** hardware and driver troubleshooting, account administration, permissions, service checks, and technical documentation
+---
 
-I'm continuing to learn these tools. Listing one here means I've worked with it in a lab or personal project, not that I've administered it professionally.
+## Initial Troubleshooting — No Display
 
-## Certifications and current learning
+When I first powered on the machine, the fans started, the power LED remained on, and the keyboard received power, but the monitor reported:
 
-- **CompTIA A+** — completed April 2026
-- **CompTIA Network+** — studying; not yet certified
+```text
+No Signal
+```
 
-## What I'm looking for
+The monitor was connected by DisplayPort to the motherboard.
 
-I'm looking for my first **Help Desk, IT Support, Service Desk, or Desktop Support** role in Calgary, with remote opportunities also of interest. I'd like to work somewhere I can help people solve problems, learn from experienced technicians, and keep building the practical skills I've started developing here.
+Since the system showed several signs that it was powering up normally, I checked the available display hardware before assuming that the RAM, motherboard, CPU, or power supply had failed.
+
+Opening the chassis revealed an NVIDIA T1000 discrete graphics card using Mini DisplayPort outputs.
+
+I connected the monitor directly to the T1000 using a Mini DisplayPort-to-DisplayPort cable.
+
+Video output returned immediately and the machine booted normally.
+
+**Cause:** The display was connected to the motherboard video output rather than the installed discrete GPU.
+
+**Resolution:** Connected the monitor directly to the NVIDIA T1000.
+
+![NVIDIA T1000 and motherboard](images/lenovo-motherboard.jpg)
+
+This was an early example of using the available symptoms to narrow the problem before replacing hardware. The fans, power LED, and keyboard power suggested that the machine could already be completing POST, making the display path a reasonable first troubleshooting target.
+
+---
+
+# 2. Hardware Inventory
+
+Once Windows was accessible, I established a hardware baseline before purchasing or replacing components.
+
+## Windows System Information
+
+I started with Windows System Information:
+
+```text
+msinfo32
+```
+
+![Windows System Information](images/system-information.png)
+
+This confirmed:
+
+- Intel Core i5-4570
+- 8 GB installed RAM
+- UEFI firmware
+- Windows 10 Pro
+- Lenovo 10A8 platform
+
+The processor reported the necessary virtualization extensions, but System Information initially showed:
+
+```text
+Virtualization Enabled in Firmware: No
+```
+
+This indicated that the CPU supported virtualization but that the feature still needed to be enabled in firmware before the system could be used as intended.
+
+---
+
+## Memory Investigation
+
+I queried the installed DIMMs with PowerShell:
+
+```powershell
+Get-CimInstance Win32_PhysicalMemory |
+    Select-Object DeviceLocator, Manufacturer, PartNumber, Capacity, Speed
+```
+
+The system returned two Hynix modules:
+
+```text
+Manufacturer : Hynix/Hyundai
+PartNumber   : HMT451U6AFR8C-PB
+Capacity     : 4294967296
+Speed        : 1600
+```
+
+Each module was 4 GB, giving the system 8 GB total.
+
+![PowerShell memory and disk inventory](images/powershell-hardware-inventory.png)
+
+Physical inspection showed four DIMM slots with two populated.
+
+![Internal system overview](images/lenovo-internal-overview.jpg)
+
+Rather than replacing the existing memory, I decided to add another 2 x 4 GB DDR3-1600 kit.
+
+```text
+Starting memory:  8 GB
+Target memory:   16 GB
+```
+
+This provided more capacity for virtual machines and containers while keeping the investment in the older platform low.
+
+---
+
+## Storage Investigation
+
+Disk Management showed a single physical disk with approximately 465 GB of usable capacity.
+
+![Windows Disk Management](images/disk-management.png)
+
+The original Windows installation contained:
+
+- 100 MB EFI System Partition
+- approximately 465 GB NTFS Windows partition
+- 548 MB Recovery partition
+
+I queried the physical disk using PowerShell:
+
+```powershell
+Get-CimInstance Win32_DiskDrive |
+    Select-Object Model, Size, Status
+```
+
+The installed drive was:
+
+```text
+Model  : ST500DM002-1SB10A
+Size   : 500105249280
+Status : OK
+```
+
+Because this was an older mechanical drive, I did not consider the basic Windows `OK` result sufficient evidence of its health before using it for the Proxmox installation.
+
+---
+
+## Physical Inspection
+
+After shutting down and disconnecting the system, I inspected the chassis for:
+
+- available memory slots
+- storage mounting locations
+- SATA connections
+- PCIe expansion
+- existing cabling
+- general physical condition
+
+![Internal system overview](images/lenovo-internal-overview.jpg)
+
+The NVIDIA T1000 occupies the primary PCIe slot, with additional expansion available below it.
+
+### Drive Cage
+
+The existing Seagate HDD is mounted in Lenovo's drive assembly.
+
+![Lenovo drive cage](images/lenovo-drive-cage.jpg)
+
+There is room to continue investigating additional storage, but I decided against purchasing an SSD immediately.
+
+---
+
+# 3. Upgrade Decisions and Hardware Validation
+
+My approach was to avoid replacing hardware simply because newer hardware was available.
+
+The initial upgrade plan became:
+
+```text
+Memory:   8 GB -> 16 GB DDR3-1600
+Storage:  Retain existing 500 GB HDD
+SSD:      Deferred
+Backups:  Future dedicated storage
+```
+
+The existing HDD was sufficient for learning Proxmox and running lightweight services. VM and container storage performance would be lower than with an SSD, but that did not prevent the machine from fulfilling the initial objectives of the project.
+
+---
+
+## Memory Upgrade
+
+I installed an additional 2 x 4 GB Gigastone DDR3-1600 kit alongside the existing Hynix memory.
+
+```text
+Existing:  2 x 4 GB Hynix DDR3-1600
+Added:     2 x 4 GB Gigastone DDR3-1600
+Total:     16 GB DDR3-1600
+```
+
+UEFI and Windows both detected all 16 GB operating at 1600 MHz.
+
+![16 GB memory detected in UEFI](images/Uefi-16gb-memory.jpg)
+
+Because the final configuration uses DIMMs from two manufacturers, detection alone was not enough to consider the upgrade validated.
+
+---
+
+## Memory Testing
+
+I ran Windows Memory Diagnostic using two passes.
+
+After the test completed, I checked Event Viewer.
+
+Event ID 1201 reported:
+
+```text
+The Windows Memory Diagnostic tested the computer's memory and detected no errors.
+```
+
+![Windows Memory Diagnostic passed](images/Windows-memory-diagnostic-pass.png)
+
+With all 16 GB detected and the diagnostic completing without errors, I retained the mixed Hynix and Gigastone configuration.
+
+---
+
+## Virtualization Readiness
+
+I entered UEFI and enabled:
+
+- Intel Virtualization Technology (VT-x)
+- Intel VT-d
+
+After returning to Windows, System Information reported:
+
+```text
+Hyper-V - VM Monitor Mode Extensions: Yes
+Hyper-V - Second Level Address Translation Extensions: Yes
+Hyper-V - Virtualization Enabled in Firmware: Yes
+Hyper-V - Data Execution Prevention: Yes
+```
+
+![Virtualization enabled in firmware](images/Virtualization-enabled.png)
+
+This confirmed that the machine was ready for use as a virtualization host.
+
+---
+
+## HDD Health Validation
+
+Because I planned to retain the existing HDD, I used `smartmontools` to inspect its SMART data.
+
+Important attributes included:
+
+```text
+Reallocated sectors:       0
+Reported uncorrectable:    0
+Current pending sectors:   0
+Offline uncorrectable:     0
+UDMA CRC errors:           0
+Power-on hours:            ~10,272
+Temperature:               34 C
+```
+
+The SMART error log contained no recorded disk errors.
+
+I then ran an extended SMART self-test.
+
+The completed test reported:
+
+```text
+Completed without error
+```
+
+No first-error LBA was reported.
+
+![HDD extended SMART test](images/Hhd-smart-extended-test.png)
+
+These results were sufficient for the initial lab deployment.
+
+The HDD remains older mechanical storage, so it will not be treated as the only copy of important data. Backup storage and a future SSD upgrade remain planned improvements.
+
+---
+
+# 4. Proxmox VE Deployment
+
+With the memory, virtualization support, and storage validated, I replaced Windows with Proxmox VE.
+
+Proxmox was installed directly on the Lenovo as a bare-metal hypervisor.
+
+The initial management configuration was:
+
+```text
+Hostname:         pve
+Management IP:    192.168.1.10/24
+Default gateway:  192.168.1.254
+Web interface:    https://192.168.1.10:8006
+```
+
+The management address is static so access to the hypervisor does not depend on a changing DHCP lease.
+
+The Proxmox web interface currently uses its default self-signed certificate, so browsers display a certificate warning when accessing it over the LAN.
+
+![Initial Proxmox VE deployment](images/Proxmox-Summary-Initial.png)
+
+---
+
+# 5. Repository Troubleshooting and Host Updates
+
+After installation, I attempted to update the Proxmox host.
+
+The update returned:
+
+```text
+401 Unauthorized
+```
+
+![Proxmox enterprise repository 401 error](images/Proxmox-enterprise-repo-401.png)
+
+Rather than treating this as a general connectivity failure, I examined which repository was returning the error.
+
+The failing source was the Proxmox enterprise repository.
+
+The enterprise repository requires a paid subscription, which this lab does not use.
+
+I enabled:
+
+```text
+pve-no-subscription
+```
+
+A subsequent update still produced an authorization error because the enterprise Ceph repository remained enabled.
+
+I disabled the enterprise Ceph repository and ran the update again.
+
+The host then successfully retrieved updates from:
+
+- Debian repositories
+- Debian security repositories
+- Proxmox no-subscription repository
+
+The update completed with:
+
+```text
+TASK OK
+```
+
+![Proxmox repositories corrected](images/Proxmox-repositories-fixed.png)
+
+### Troubleshooting Summary
+
+```text
+Symptom
+   |
+   v
+apt update returns 401 Unauthorized
+   |
+   v
+Identify failing repository
+   |
+   v
+Enterprise repository requires subscription
+   |
+   v
+Enable pve-no-subscription
+   |
+   v
+401 remains
+   |
+   v
+Identify enterprise Ceph repository
+   |
+   v
+Disable enterprise Ceph repository
+   |
+   v
+Retest
+   |
+   v
+TASK OK
+```
+
+This demonstrated the importance of reading the specific error source rather than assuming that all package update failures indicate broken networking.
+
+---
+
+## Kernel Update Verification
+
+After the updates, Proxmox reported that a new kernel had been installed.
+
+I rebooted the host and checked:
+
+```bash
+uname -r
+```
+
+The system returned:
+
+```text
+7.0.14-16-pve
+```
+
+This confirmed that the host had successfully booted using the updated kernel.
+
+---
+
+# 6. Proxmox Networking
+
+I inspected the host networking with:
+
+```bash
+ip addr
+ip route
+```
+
+The relevant configuration was:
+
+```text
+Management bridge:  vmbr0
+Host address:       192.168.1.10/24
+Default gateway:    192.168.1.254
+LAN subnet:         192.168.1.0/24
+```
+
+The physical Ethernet interface is attached to the Linux bridge `vmbr0`.
+
+The routing table showed:
+
+```text
+default via 192.168.1.254 dev vmbr0
+192.168.1.0/24 dev vmbr0 proto kernel scope link src 192.168.1.10
+```
+
+![Proxmox IP address and routing configuration](images/Iproute-ipaddr.png)
+
+`vmbr0` allows virtual machines and containers to communicate through the physical network interface while appearing as individual systems on the LAN.
+
+This provided practical experience with the distinction between a physical network interface and the Linux bridge used by the hypervisor.
+
+---
+
+# 7. Proxmox Storage Layout
+
+After installation, I initially noticed that:
+
+```bash
+df -h
+```
+
+showed approximately 94 GB for the root filesystem even though the machine contains a 500 GB disk.
+
+Rather than assuming the remaining capacity was missing, I inspected the block-device layout:
+
+```bash
+lsblk
+```
+
+The Proxmox installer had created approximately:
+
+```text
+500 GB Seagate HDD
+|
++-- EFI partition
+|
++-- pve-swap       8 GB
+|
++-- pve-root      96 GB
+|
++-- pve-data     ~337 GB LVM-thin pool
+```
+
+![Proxmox storage layout](images/Proxmox-storage-lsblk.png)
+
+The capacity was therefore accounted for.
+
+`df -h` reports mounted filesystems, while the `pve-data` LVM-thin pool provides storage for VM and LXC disks and does not appear as a conventional mounted filesystem.
+
+Within Proxmox, the storage is presented primarily as:
+
+- `local` — directory-based storage for templates and backups
+- `local-lvm` — LVM-thin storage for VM and LXC virtual disks
+
+This was another useful troubleshooting example where the first command did not provide the complete picture.
+
+---
+
+# 8. First LXC Container
+
+I created a general-purpose Debian environment before deploying any household service.
+
+This gives me a lightweight container that can be modified, broken, troubleshot, and rebuilt without affecting other systems.
+
+I downloaded:
+
+```text
+debian-13-standard_13.6-1_amd64.tar.zst
+```
+
+and created:
+
+| Setting | Configuration |
+| --- | --- |
+| CT ID | 100 |
+| Hostname | `debian-lab` |
+| Operating system | Debian 13 |
+| Container type | Unprivileged LXC |
+| CPU | 1 core |
+| Memory | 512 MiB |
+| Swap | 512 MiB |
+| Root disk | 8 GiB |
+| Storage | `local-lvm` |
+| Network bridge | `vmbr0` |
+| IPv4 | DHCP |
+
+The resource allocation was intentionally small because the container is intended as a basic Linux lab rather than a resource-intensive workload.
+
+---
+
+## Layered Network Validation
+
+After starting the container, I inspected:
+
+```bash
+ip addr
+ip route
+```
+
+The container received:
+
+```text
+192.168.1.77/24
+```
+
+Its routing table included:
+
+```text
+default via 192.168.1.254 dev eth0
+192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.77
+```
+
+Rather than treating a single successful ping as proof that networking was working, I tested connectivity in layers.
+
+### Local Gateway
+
+```bash
+ping -c 4 192.168.1.254
+```
+
+A successful response confirmed connectivity between the container and the router.
+
+### Internet Routing
+
+```bash
+ping -c 4 1.1.1.1
+```
+
+This tested external connectivity without requiring DNS.
+
+### DNS Resolution
+
+```bash
+ping -c 4 google.com
+```
+
+This tested hostname resolution.
+
+The sequence can be represented as:
+
+```text
+Container
+    |
+    v
+Local network
+    |
+    v
+Default gateway
+    |
+    v
+Internet routing
+    |
+    v
+DNS resolution
+```
+
+If the gateway and `1.1.1.1` had responded while `google.com` failed, DNS would have become the primary troubleshooting target.
+
+This layered approach is now part of the troubleshooting process I use when diagnosing basic network connectivity.
+
+---
+
+## Container Updates and Resource Usage
+
+Once networking was validated:
+
+```bash
+apt update
+apt upgrade
+```
+
+I then checked resource usage:
+
+```bash
+free -h
+df -h
+```
+
+At idle, the container was using approximately:
+
+```text
+Memory:  34 MiB / 512 MiB
+Disk:    713 MiB / 8 GiB
+```
+
+This demonstrated the low resource overhead of LXC for lightweight Linux workloads.
+
+---
+
+# 9. AdGuard Home DNS Deployment
+
+After validating the general-purpose Debian container, I deployed the first dedicated network service on the Proxmox host.
+
+I chose AdGuard Home to gain practical experience with:
+
+- DNS
+- static addressing
+- Linux services
+- TCP/UDP ports
+- client/server communication
+- DNS filtering
+- service validation
+- troubleshooting network dependencies
+
+Rather than installing AdGuard Home inside `debian-lab`, I created a dedicated container so the experimental Linux environment could remain disposable.
+
+The basic DNS path is:
+
+```text
+Ubuntu workstation
+        |
+        | DNS query
+        v
+AdGuard Home LXC
+192.168.1.11
+        |
+        | upstream DNS
+        v
+Internet resolver
+```
+
+---
+
+## AdGuard Container Configuration
+
+I created a second unprivileged Debian 13 LXC:
+
+| Setting | Configuration |
+| --- | --- |
+| CT ID | 101 |
+| Hostname | `adguard` |
+| Operating system | Debian 13 |
+| Container type | Unprivileged LXC |
+| CPU | 1 core |
+| Memory | 512 MiB |
+| Swap | 512 MiB |
+| Root disk | 8 GiB |
+| Storage | `local-lvm` |
+| Network bridge | `vmbr0` |
+| IPv4 | `192.168.1.11/24` |
+| Default gateway | `192.168.1.254` |
+
+![AdGuard LXC configuration](images/AdGuard/adguard-lxc-configuration.png)
+Unlike `debian-lab`, the AdGuard container was assigned a static IPv4 address.
+
+A DNS server requires a predictable address because clients need to know where to send DNS queries.
+
+The resulting configuration was:
+
+```text
+AdGuard Home:     192.168.1.11/24
+Default gateway:  192.168.1.254
+Bridge:           vmbr0
+```
+
+---
+
+# 10. AdGuard Pre-Installation Validation
+
+Before installing the application, I established a known-good network baseline.
+
+I checked:
+
+```bash
+ip addr
+ip route
+```
+
+The relevant routing configuration was:
+
+```text
+default via 192.168.1.254 dev eth0
+192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.11
+```
+
+![AdGuard LXC network configuration](images/AdGuard/adguard-lxc-network-configuration.png)
+
+I then tested connectivity in stages:
+
+```bash
+ping -c 4 192.168.1.254
+ping -c 4 1.1.1.1
+ping -c 4 google.com
+```
+
+![AdGuard pre-install connectivity validation](images/AdGuard/adguard-preinstall-connectivity-validation.png)
+
+These tests established that:
+
+```text
+Static addressing       PASS
+Local gateway           PASS
+Internet routing        PASS
+DNS resolution          PASS
+```
+
+Establishing this baseline before installing AdGuard meant that a later failure could be separated from an existing network configuration problem.
+
+---
+
+## Pre-Installation Port Check
+
+I inspected existing listening sockets:
+
+```bash
+ss -tulpn
+```
+
+This allowed me to confirm that another DNS service was not already occupying port 53 before installing AdGuard Home.
+
+I also updated the Debian container:
+
+```bash
+apt update
+apt upgrade
+```
+
+and confirmed that it was running Debian 13.
+
+---
+
+# 11. AdGuard Installation and Service Validation
+
+AdGuard Home was installed under:
+
+```text
+/opt/AdGuardHome
+```
+
+The installed version was:
+
+```text
+AdGuard Home v0.107.79
+```
+
+After installation, I checked the service:
+
+```bash
+/opt/AdGuardHome/AdGuardHome -s status
+```
+
+The application reported:
+
+```text
+service: running
+```
+
+I then checked listening sockets again:
+
+```bash
+ss -tulpn
+```
+
+![AdGuard Home service installation validation](images/AdGuard/adguard-service-install-validation.png)
+
+This provided two separate forms of validation:
+
+```text
+Application service status     PASS
+Expected network listeners     PASS
+```
+
+I did not rely solely on the web interface loading as proof that the complete service was functioning.
+
+---
+
+# 12. DNS and Administrative Interface Configuration
+
+During initial setup, I configured AdGuard Home to use the container's static interface.
+
+The primary services became:
+
+```text
+Web administration:  192.168.1.11:80
+DNS service:         192.168.1.11:53
+```
+
+![AdGuard Home interface configuration](images/AdGuard/adguard-interface-configuration.png)
+
+Port 53 provides DNS service to clients.
+
+Port 80 provides the administrative interface on the local network.
+
+The administrative interface has not been exposed directly to the Internet.
+
+---
+
+# 13. Client-Side DNS Validation
+
+Rather than immediately changing DNS for the entire household, I first tested the service directly from my Ubuntu workstation.
+
+This limited the impact of a configuration error while still allowing the complete DNS path to be validated.
+
+From the workstation:
+
+```bash
+dig @192.168.1.11 google.com
+```
+
+The query completed successfully.
+
+The response identified:
+
+```text
+SERVER: 192.168.1.11#53(192.168.1.11) (UDP)
+```
+
+![Client DNS query validation](images/AdGuard/adguard-client-dns-query-validation.png)
+
+I then checked the AdGuard Home query log.
+
+The corresponding `google.com` request appeared with my Ubuntu workstation at `192.168.1.86` identified as the client.
+
+This provided validation from both ends:
+
+```text
+CLIENT
+Ubuntu workstation
+        |
+        | query
+        v
+SERVER
+AdGuard Home
+        |
+        | upstream lookup
+        v
+External resolver
+        |
+        | response
+        v
+Ubuntu workstation
+```
+
+The workstation demonstrated that the query succeeded.
+
+The server log demonstrated that AdGuard actually received and processed it.
+
+---
+
+# 14. DNS Filtering Validation
+
+Successful resolution demonstrated that AdGuard could operate as a DNS server, but it did not prove that filtering worked.
+
+I created a temporary custom filtering rule for:
+
+```text
+adguard-lab-test.invalid
+```
+
+From the Ubuntu workstation:
+
+```bash
+dig @192.168.1.11 adguard-lab-test.invalid
+```
+
+AdGuard returned:
+
+```text
+0.0.0.0
+```
+
+while identifying the DNS server as:
+
+```text
+SERVER: 192.168.1.11#53(192.168.1.11) (UDP)
+```
+
+I then checked the AdGuard Home query log.
+
+The request appeared as:
+
+```text
+adguard-lab-test.invalid
+Blocked
+Custom filtering rules
+Client: 192.168.1.86
+```
+
+![AdGuard Home filtering validation](images/AdGuard/adguard-filtering-query-log.png)
+
+The complete test path was therefore:
+
+```text
+Client generates DNS query
+        |
+        v
+AdGuard receives query
+        |
+        v
+Filtering rules evaluated
+        |
+        v
+Custom rule matched
+        |
+        v
+Request blocked
+        |
+        v
+Blocked response returned
+        |
+        v
+Event recorded in query log
+```
+
+Using a controlled test hostname provided a repeatable test instead of depending on whether a real advertising or tracking domain happened to be blocked.
+
+---
+
+# 15. AdGuard Deployment Validation
+
+At the end of the deployment I had independently validated:
+
+- static IP configuration
+- correct default route
+- local gateway connectivity
+- external IP connectivity
+- DNS resolution before application installation
+- availability of port 53 before installation
+- successful AdGuard Home installation
+- running application service
+- expected DNS listener
+- local administrative interface
+- successful DNS resolution from another machine
+- corresponding server-side query logging
+- custom DNS filtering
+- corresponding blocked-query logging
+
+The deployment was therefore validated beyond simply confirming that the AdGuard dashboard loaded.
+
+I verified the underlying network, application state, network listener, client/server communication, normal DNS resolution, and filtering behavior separately.
+
+---
+
+# 16. Headless Deployment and Remote Administration
+
+After validating the Proxmox host, I moved the machine to its intended location near the home network equipment.
+
+The Lenovo runs without a dedicated monitor, keyboard, or mouse and connects to the LAN through wired Ethernet.
+
+![Lenovo Proxmox server deployed headless](images/Proxmox-headless-deployment.jpg)
+
+Administration is performed from another workstation using:
+
+```text
+https://192.168.1.10:8006
+```
+
+![Remote Proxmox administration](images/Proxmox-remote-management.jpg)
+
+The management path is:
+
+```text
+Administration workstation
+        |
+        | LAN
+        v
+Home router
+        |
+        | Ethernet
+        v
+Lenovo Proxmox host
+        |
+        +---- vmbr0
+                 |
+                 +---- CT 100: debian-lab
+                 |
+                 +---- CT 101: adguard
+                 |
+                 +---- VM 102: DC-01
+```
+
+This completed the original objective of converting the unused desktop into a remotely administered virtualization host.
+
+---
+
+
+# 17. Windows Server VM Deployment
+
+To expand the lab toward Windows administration and end-user support scenarios, I deployed a Windows Server virtual machine on the existing Proxmox host.
+
+The long-term purpose of the VM is to provide an isolated environment for practising Active Directory Domain Services, Windows DNS, user and group administration, Group Policy, permissions, domain joins, and common Windows support scenarios.
+
+Active Directory has **not** yet been installed. The current milestone establishes a known-good Windows Server baseline before introducing those additional services.
+
+## VM Configuration
+
+| Setting | Configuration |
+| --- | --- |
+| VM ID | 102 |
+| VM name | `DC-01` |
+| Operating system | Windows Server 2022 Standard Evaluation |
+| Interface | Desktop Experience |
+| Memory | 4 GB |
+| System disk | 64 GB |
+| Storage | `local-lvm` |
+| Network bridge | `vmbr0` |
+| Network adapter | Red Hat VirtIO Ethernet Adapter |
+| IPv4 | `192.168.1.12/24` |
+| Default gateway | `192.168.1.254` |
+| Current DNS | `192.168.1.11` |
+
+The VM name `DC-01` reflects its intended future role as the first domain controller in the isolated Windows lab. At this stage it remains a standalone Windows Server system.
+
+---
+
+## VirtIO Driver Troubleshooting
+
+Windows Server installation introduced an additional virtualization-specific troubleshooting requirement.
+
+The VM was configured to use VirtIO devices rather than relying entirely on legacy emulated hardware. Windows did not initially have all required VirtIO drivers available, including the virtual network adapter driver.
+
+After loading the appropriate VirtIO driver, Device Manager identified the adapter as:
+
+```text
+Red Hat VirtIO Ethernet Adapter
+```
+
+This was validated before treating the lack of network connectivity as an IP, routing, or DNS configuration problem.
+
+---
+
+## Initial Network Validation
+
+The server initially received its network configuration through DHCP.
+
+I inspected the configuration using:
+
+```cmd
+ipconfig /all
+```
+
+This confirmed that the VirtIO network adapter was operating and that the VM had received an address on the existing LAN.
+
+I then tested the network in stages.
+
+### Default Gateway
+
+```cmd
+ping 192.168.1.254
+```
+
+The gateway responded successfully.
+
+### Existing DNS Server
+
+```cmd
+ping 192.168.1.11
+```
+
+The AdGuard container responded successfully.
+
+### DNS Resolution
+
+```cmd
+nslookup google.com
+```
+
+The lookup returned valid DNS results.
+
+These tests established a known-good network baseline before changing the VM from DHCP to static addressing.
+
+---
+
+## Windows Update
+
+Before adding server roles, I ran Windows Update and allowed the available updates to complete.
+
+After installation and required restarts, Windows Update reported that the system was up to date.
+
+Updating the standalone server before adding Active Directory reduces the number of unrelated changes being introduced during the later domain-controller deployment.
+
+---
+
+## Static IPv4 Configuration
+
+Before assigning a static address, I checked the existing DHCP configuration.
+
+The router's DHCP pool begins at:
+
+```text
+192.168.1.64
+```
+
+The address selected for the Windows Server was:
+
+```text
+192.168.1.12
+```
+
+This places the server outside the DHCP pool and avoids relying on a changing DHCP lease.
+
+The resulting configuration is:
+
+```text
+Hostname:         DC-01
+IPv4 address:     192.168.1.12
+Subnet mask:      255.255.255.0
+Default gateway:  192.168.1.254
+DNS server:       192.168.1.11
+DHCP:             Disabled
+```
+
+After applying the configuration, I repeated the network tests:
+
+```cmd
+ping 192.168.1.254
+ping 192.168.1.11
+nslookup google.com
+ipconfig /all
+```
+
+The gateway remained reachable, the existing DNS server remained reachable, DNS resolution succeeded, and `ipconfig /all` confirmed that DHCP was disabled and `192.168.1.12` was assigned to the server.
+
+This established the Windows Server VM as a stable network endpoint before installing Active Directory.
+
+---
+
+## Current Windows Server State
+
+```text
+Windows Server installation       PASS
+VirtIO network adapter            PASS
+Windows Update                    PASS
+Hostname DC-01                    PASS
+Static IPv4                       PASS
+Default gateway connectivity      PASS
+AdGuard connectivity              PASS
+External DNS resolution           PASS
+AD DS installed                   NOT YET
+Domain controller                 NOT YET
+```
+
+The next step is to preserve this known-good standalone server state before installing Active Directory Domain Services and Windows DNS.
+
+---
+
+# 18. Troubleshooting Method
+
+As the lab has developed, I have started using a repeatable troubleshooting process rather than immediately changing configurations when something fails.
+
+My general process is:
+
+```text
+Identify the symptom
+        |
+        v
+Determine scope and impact
+        |
+        v
+Gather configuration and error information
+        |
+        v
+Establish what is already working
+        |
+        v
+Isolate the failing layer/component
+        |
+        v
+Make one controlled change
+        |
+        v
+Retest
+        |
+        v
+Verify normal operation
+        |
+        v
+Document the cause and resolution
+```
+
+Examples from this project include:
+
+### No Display
+
+```text
+Power present
+-> system appeared to POST
+-> inspect display path
+-> identify discrete GPU
+-> move display connection
+-> video restored
+```
+
+### Proxmox Update Failure
+
+```text
+401 Unauthorized
+-> identify failing repository
+-> determine subscription requirement
+-> correct repository configuration
+-> identify remaining Ceph enterprise source
+-> disable it
+-> rerun update
+-> TASK OK
+```
+
+### Container Networking
+
+```text
+Check IP configuration
+-> check route
+-> test gateway
+-> test external IP
+-> test hostname
+-> isolate DNS only after lower layers work
+```
+
+### AdGuard DNS
+
+```text
+Validate network first
+-> check port availability
+-> install service
+-> verify service state
+-> verify listening port
+-> query from separate client
+-> verify server-side log
+-> test filtering
+-> verify blocked request
+```
+
+### Windows Server Networking
+
+```text
+Verify network adapter
+-> inspect DHCP configuration
+-> test gateway
+-> test existing DNS server
+-> test DNS resolution
+-> identify unused static address outside DHCP pool
+-> configure static IPv4
+-> repeat connectivity tests
+-> verify DHCP disabled
+```
+
+This process is intentionally being developed alongside the technical environment so that the lab improves both my administration skills and my troubleshooting habits.
+
+---
+
+# 19. Process Documentation
+
+As services become more important, I am separating high-level project documentation from repeatable operational procedures.
+
+The README explains:
+
+- what I built
+- why I made particular decisions
+- what problems occurred
+- how the environment was validated
+
+Separate process documentation will be used for procedures that should be repeatable without reconstructing the original project.
+
+Planned documentation includes:
+
+```text
+docs/
+|
++-- windows-domain-lab.md
+|
++-- adguard-deployment.md
+|
++-- adguard-recovery.md
+|
++-- proxmox-backup-restore.md
+|
++-- troubleshooting/
+    |
+    +-- proxmox-repository-401.md
+    |
+    +-- dns-resolution-failure.md
+```
+
+A process document will generally use the following structure:
+
+```text
+Purpose
+Prerequisites
+Expected configuration
+Procedure
+Validation
+Common failures
+Rollback / recovery
+```
+
+Troubleshooting incident documentation will instead focus on:
+
+```text
+Symptom
+Impact
+Initial observations
+Diagnostic process
+Root cause
+Resolution
+Validation
+Lessons learned
+```
+
+This allows the repository to function as both a project portfolio and a growing technical knowledge base.
+
+---
+
+# 20. Intended Use
+
+The Proxmox host currently serves two purposes:
+
+1. a home infrastructure platform
+2. an IT administration and troubleshooting lab
+
+The first dedicated network service is AdGuard Home at `192.168.1.11`.
+
+The Windows Server VM `DC-01` is deployed at `192.168.1.12` and is being prepared for the isolated Windows domain lab.
+
+The original `debian-lab` container remains a general-purpose environment that can be modified or rebuilt without affecting the DNS service or Windows lab.
+
+Future workloads will continue to be separated according to their purpose and potential impact.
+
+Planned additions include:
+
+- Active Directory Domain Services
+- isolated Windows Server DNS
+- Domain-user sign-in testing
+- Active Directory users, groups, and Group Policy
+- SMB file sharing
+- backups
+- host and service monitoring
+- additional Linux containers and VMs
+
+Active Directory and Windows DNS run on DC-01 separately from AdGuard Home. Domain-client DNS needs to point to the domain controller; household DNS continues to use AdGuard.
+
+The environment will continue to evolve incrementally, with each service tested and documented before additional dependencies are introduced.
+
+---
+
+## 21-0. Next Priority
+
+1. Capture the `WIN11-CLIENT` computer object in Active Directory Users and Computers.
+2. Create a standard domain test user and validate interactive Windows 11 sign-in.
+3. Create small OUs and groups, then apply and verify one Group Policy.
+4. Build a test SMB share with deliberate NTFS/share permission scenarios.
+5. Document support incidents and verify DNS/forwarder behaviour.
+6. Test backup and restore before expanding further.
+
+## 21-1. Later Expansion
+
+- Active Directory users, groups, and OUs
+- Group Policy
+- SMB file services and NTFS permissions
+- Windows client support scenarios
+- AD/DNS troubleshooting scenarios
+- Monitoring
+- Additional DNS failure testing
+- Additional Linux workloads
+- Evaluate SSD upgrade
+
+---
+
+## Skills Practiced
+
+This project currently provides hands-on practice with:
+
+- PC hardware troubleshooting
+- hardware inventory and validation
+- memory installation and testing
+- SMART disk diagnostics
+- UEFI configuration
+- Intel VT-x and VT-d
+- Proxmox VE
+- bare-metal virtualization
+- virtual machine provisioning
+- Linux administration
+- Windows Server administration
+- Debian
+- LXC containers
+- Linux bridges
+- VirtIO devices and drivers
+- static IPv4 addressing
+- DHCP
+- routing
+- DNS
+- TCP/UDP ports
+- AdGuard Home
+- Linux service validation
+- Windows network configuration
+- Windows Device Manager
+- Windows Update
+- `ipconfig`
+- `nslookup`
+- `ip addr`
+- `ip route`
+- `ping`
+- `dig`
+- `ss`
+- `lsblk`
+- `df`
+- `free`
+- package management
+- layered troubleshooting
+- client/server validation
+- technical documentation
+- change validation
+- infrastructure planning
+
+---
+
+This project is a work in progress. The repository will continue to be updated with actual configurations, troubleshooting cases, process documentation, recovery procedures, and additional services as the lab develops.
+
+## 22. Active Directory and Windows 11 Client — Current Milestone
+
+The lab now includes Windows Server 2022 (`DC-01`, VM 102, `192.168.1.12`) as the first domain controller and DNS server for `ad.seasonandsavour.com`. Windows 11 Pro (`WIN11-CLIENT`, VM 103) was deployed with a VirtIO network adapter and joined to the domain.
+
+Client-side troubleshooting distinguished successful ping and explicit AD DNS lookups from failed default DNS lookups through ISP IPv6 resolvers. After correcting client DNS selection, the AD domain A record and LDAP SRV record resolved through `192.168.1.12`. The domain join was accepted and, following restart, `Test-ComputerSecureChannel` returned `True`.
+
+This is **independent homelab work**, not production administration. A domain-user interactive sign-in and a screenshot of the AD computer object are still pending. An unrelated CIM `Invalid class` query error remains open.
+
+- [Windows Server 2022 AD DS deployment and validation](docs/windows-server-ad-ds-deployment.md)
+- [Windows 11 client, DNS investigation and domain join](docs/windows-client-domain-join.md)
+
+![Domain join accepted](images/client-08-domain-join-restart-required.png)
+
+![Post-restart secure channel validated](images/client-10-secure-channel-verified.png)
