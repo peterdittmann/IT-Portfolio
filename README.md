@@ -1,154 +1,63 @@
-# IT Support Portfolio – Peter Dittmann
+# IT Support Portfolio
 
-## About Me
+I'm Peter, a Calgary-based chef working towards my first IT support role.
 
-CompTIA A+ certified IT support candidate building hands-on experience through practical support labs and independently managed systems.
+I've spent years working in busy kitchens, where a problem rarely arrives at a convenient time. You have to figure out what's happening, decide what matters first, communicate with the people around you, and get things working again. That's the part of the job I've always enjoyed, and it's a big part of what drew me towards IT.
 
-This portfolio documents my work with Windows, Active Directory, Linux, networking, virtualization, hardware troubleshooting, Docker, and secure remote access.
+I completed my **CompTIA A+** in April 2026. Outside of work, I've been building a homelab and working through Windows, Linux, networking, and troubleshooting projects. This portfolio is where I keep track of what I've actually done, including the things that didn't work on the first try.
 
-The projects below focus on the kind of work I want to perform professionally: troubleshooting user and system issues, administering accounts and permissions, diagnosing connectivity problems, documenting solutions, and maintaining reliable systems.
-
----
+These are **personal projects and lab exercises**, not paid IT administration experience.
 
 ## Projects
 
-### Active Directory & Windows Support Lab
+### [Home Server and Windows Domain Lab](./Home-Server-Lab)
 
-Built a small Windows domain environment using Windows Server 2022 and a Windows client to practise common IT support and administration tasks.
+I started with an older Lenovo desktop that wasn't displaying anything on the monitor. After sorting out the hardware issue, I upgraded its memory, installed Proxmox, and began using it as a home server.
 
-Configured and managed Active Directory users, groups, permissions, and Group Policy, and worked through support scenarios including password resets, account access, permissions, and domain connectivity.
+It's now running Debian containers, AdGuard Home, a Windows Server 2022 domain controller, and a Windows 11 Pro client. I built the Active Directory domain `ad.seasonandsavour.com`, joined the client, and verified its secure channel.
 
-[View Active Directory Lab](./Active-Directory-Lab)
+One of the more useful problems came during the client setup: it could reach the domain controller, but normal DNS lookups were going to the ISP's IPv6 resolvers instead of my AD DNS server. Working through that made the difference between *network connectivity* and *service discovery* much clearer to me.
 
----
+**What I've worked with:** Proxmox VE, Windows Server 2022, Windows 11 Pro, Active Directory Domain Services, DNS, PowerShell, VirtIO drivers, Debian Linux, and basic network troubleshooting.
 
-### Home Server & Virtualization Lab
+**Still to do:** domain-user sign-in, OUs and groups, Group Policy, shared-folder permissions, backup and restore testing, and more support scenarios.
 
-Repurposed an older Lenovo workstation into a Proxmox VE home server and virtualization lab.
+[Read the Home Server Lab](./Home-Server-Lab) · [Windows Server deployment](./Home-Server-Lab/docs/windows-server-ad-ds-deployment.md) · [Windows client domain join](./Home-Server-Lab/docs/windows-client-domain-join.md)
 
-Worked through hardware validation, a memory upgrade, storage testing, virtualization configuration, Proxmox installation, repository configuration, and network validation. Deployed a Debian 13 LXC container and continue to expand the environment while documenting configuration, administration, and troubleshooting.
+### [Active Directory Lab](./Active-Directory-Lab)
 
-**Current environment:** Proxmox VE running headless with a Debian 13 LXC container; networking and storage validated.
+My earlier Active Directory practice focused on getting comfortable with accounts, groups, permissions, and common Windows support tasks. I'm now continuing that work in the Proxmox-based domain above, where I can test changes on a real client VM and document the results.
 
-**Hardware:** Intel i5-4570 · 16 GB DDR3 · 500 GB HDD · NVIDIA T1000
+### [Secure Hosting with Docker and Cloudflare](./Secure-Hosting-Docker)
 
-**Planned expansion:** Additional network services, monitoring, Windows Server, Active Directory, and file services.
+I wanted a way to host an application for friends without exposing services directly through my home router. I used Docker on Ubuntu with persistent storage and Cloudflare Tunnel for remote access, then tested connectivity and recovery.
 
-[View Home Server Lab](./Home-Server-Lab)
+### [Linux Hardening Lab](./Linux-Hardening-Lab)
 
----
+A practice environment for working through SSH settings, user accounts, firewall rules, and reducing unnecessary services. I documented what I changed and how I checked the results.
 
-### IT Support Lab
+### [IT Support Lab](./IT-Support-Lab)
 
-Worked through common help desk and desktop support scenarios involving password resets, account access, permissions, shared folders, printers, applications, and user support.
+Practice with everyday support problems: account access, passwords, shared folders, permissions, printers, and Windows troubleshooting. The aim is to get comfortable diagnosing an issue rather than just memorising a fix.
 
-The lab is used to practise structured troubleshooting, communication, documentation, and knowing when an issue should be escalated rather than simply applying a quick fix.
+### [Troubleshooting Playbook](./Troubleshooting-Playbook)
 
-[View IT Support Lab](./IT-Support-Lab)
+My notes on how to approach common problems involving connectivity, DNS, permissions, Windows services, and system performance. I use them to keep my troubleshooting consistent and to remind myself what to check next.
 
----
+## Tools I've used in labs and personal projects
 
-### Troubleshooting Playbook
+- **Windows:** Windows 10/11, Windows Server 2022, Active Directory, PowerShell, Command Prompt
+- **Linux and virtualization:** Ubuntu, Debian, Proxmox VE, QEMU/KVM, Docker
+- **Networking:** TCP/IP, DHCP, DNS, ICMP, Cloudflare Tunnel, UFW
+- **Support tasks:** hardware and driver troubleshooting, account administration, permissions, service checks, and technical documentation
 
-Documented repeatable troubleshooting approaches for common support problems involving DNS, permissions, Windows services, network connectivity, and system performance.
+I'm continuing to learn these tools. Listing one here means I've worked with it in a lab or personal project, not that I've administered it professionally.
 
-The playbook focuses on gathering useful information, narrowing down likely causes, testing changes, verifying the result, and documenting what was found.
+## Certifications and current learning
 
-[View Troubleshooting Playbook](./Troubleshooting-Playbook)
+- **CompTIA A+** — completed April 2026
+- **CompTIA Network+** — studying; not yet certified
 
----
+## What I'm looking for
 
-### Secure Hosting with Docker & Cloudflare
-
-Deployed a containerized application on Ubuntu with persistent storage and secure remote access through Cloudflare Tunnel.
-
-Configured the environment, tested container recovery and remote connectivity, and documented the setup and troubleshooting process.
-
-[View Secure Hosting Lab](./Secure-Hosting-Docker)
-
----
-
-### Linux Hardening Lab
-
-Hardened an Ubuntu Linux system through account configuration, SSH changes, firewall rules, and service reduction.
-
-Used the project to develop a better understanding of Linux administration, system services, access controls, and basic host security.
-
-[View Linux Hardening Lab](./Linux-Hardening-Lab)
-
----
-
-## Tools & Technologies
-
-### Windows & Identity
-
-- Windows 10
-- Windows Server 2022
-- Active Directory
-- Group Policy
-- PowerShell
-- CMD
-
-### Linux, Containers & Virtualization
-
-- Ubuntu Linux
-- Debian
-- Proxmox VE
-- QEMU/KVM
-- virt-manager
-- Docker
-
-### Networking & Remote Access
-
-- TCP/IP
-- DNS
-- DHCP
-- ICMP
-- Cloudflare Tunnel
-- UFW Firewall
-
-### Support & Administration
-
-- Hardware and peripheral troubleshooting
-- Application troubleshooting
-- User and group administration
-- Password and account-access support
-- File and NTFS permissions
-- System and service troubleshooting
-- Technical documentation
-- Git/GitHub
-
----
-
-## Current Lab Work
-
-The Home Server Lab is my current infrastructure project. The base Proxmox environment is operational, and I am continuing to document and develop the environment.
-
-### Next Planned Work
-
-- Expanding the virtualized lab environment
-- Deploying Windows Server for Active Directory and DNS
-- Adding a Windows client to the domain environment
-- Building out users, groups, organizational units, and Group Policy
-- Adding file services and monitoring
-- Creating additional support and troubleshooting scenarios
-- Documenting configuration decisions, problems encountered, and their resolution
-
-Completed work and ongoing troubleshooting notes are documented in the project README:
-
-[Follow the Home Server Lab](./Home-Server-Lab)
-
----
-
-## Certifications
-
-- **CompTIA A+** — Certified
-- **CompTIA Network+** — In progress
-
----
-
-## What I'm Working Toward
-
-I am currently seeking my first professional IT role in IT Support, Help Desk, Service Desk, Desktop Support, Technical Support, or a closely related position in Calgary or remotely.
-
-My goal is to bring the troubleshooting, documentation, user support, and systems knowledge demonstrated in these projects into a professional IT environment while continuing to develop deeper experience with Microsoft environments, endpoint support, networking, and infrastructure.
+I'm looking for my first **Help Desk, IT Support, Service Desk, or Desktop Support** role in Calgary, with remote opportunities also of interest. I'd like to work somewhere I can help people solve problems, learn from experienced technicians, and keep building the practical skills I've started developing here.
