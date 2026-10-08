@@ -3,8 +3,8 @@
 **Environment:** Independent Proxmox homelab — not professional production experience  
 **Status:** Domain joined and secure channel validated; domain-user sign-in and AD computer-object screenshot pending.
 
-## Objective
-Deploy a Windows 11 Pro workstation on Proxmox, configure it to locate a Windows Server 2022 domain controller through AD DNS, join `ad.seasonandsavour.com`, and verify the workstation's domain trust.
+## Why I built this
+I wanted to take the domain controller I had already set up and see whether a Windows workstation could actually find it, join the domain, and keep a working trust relationship. That meant testing the network and DNS before treating a successful join wizard as proof that everything was working.
 
 ## Environment
 | Component | Configuration |
