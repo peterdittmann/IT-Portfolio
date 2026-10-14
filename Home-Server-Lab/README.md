@@ -19,6 +19,7 @@ This is a personal homelab, not a production environment.
 - [Windows Server 2022 and Active Directory deployment](docs/windows-server-ad-ds-deployment.md)
 - [Windows 11 client, DNS troubleshooting, and domain join](docs/windows-client-domain-join.md)
 - [Screenshot evidence and source manifest](images/EVIDENCE-MANIFEST.md)
+- [Plex Media Server deployment and Samsung TV playback troubleshooting](docs/plex-media-server-and-samsung-tv-troubleshooting.md)
 
 ## Project navigation
 
