@@ -88,18 +88,17 @@ The following are selected screenshots from the deployment and investigation, ra
 
 | # | Evidence | File |
 | --- | --- | --- |
-| 01 | [CT 104 network configuration](../images/plex/01-plex-container-network.png) | `01-plex-container-network.png` |
-| 02 | [External storage shown in Proxmox](../images/plex/02-external-disk-proxmox.png) | `02-external-disk-proxmox.png` |
-| 03 | [Mount and filesystem validation](../images/plex/03-media-mount-validation.png) | `03-media-mount-validation.png` |
-| 04 | [Plex library populated](../images/plex/04-plex-library.png) | `04-plex-library.png` |
-| 05 | [Plex playback dashboard during troubleshooting](../images/plex/05-playback-dashboard-initial.png) | `05-playback-dashboard-initial.png` |
-| 06 | [Plex log investigation](../images/plex/06-server-log-investigation.png) | `06-server-log-investigation.png` |
-| 07 | [Plex server network settings (pre-correction)](../images/plex/07-plex-network-settings.png) | `07-plex-network-settings.png` |
-| 08 | [IPv6 addresses in Plex container](../images/plex/08-ipv6-addresses.png) | `08-ipv6-addresses.png` |
-| 09 | [Container network IPv6 configuration](../images/plex/09-container-ipv6-settings.png) | `09-container-ipv6-settings.png` |
-| 10 | [Global IPv6 address still assigned](../images/plex/10-ipv6-still-present.png) | `10-ipv6-still-present.png` |
-| 11 | [Successful local Samsung playback](../images/plex/11-successful-local-playback.png) | `11-successful-local-playback.png` |
-| 12 | [AdGuard query log search](../images/plex/12-adguard-query-log.png) | `12-adguard-query-log.png` |
+| 01 | [External storage shown in Proxmox](../images/plex/02-external-disk-proxmox.png) | `02-external-disk-proxmox.png` |
+| 02 | [Mount and filesystem validation](../images/plex/03-media-mount-validation.png) | `03-media-mount-validation.png` |
+| 03 | [Plex library populated](../images/plex/04-plex-library.png) | `04-plex-library.png` |
+| 04 | [Plex playback dashboard during troubleshooting](../images/plex/05-playback-dashboard-initial.png) | `05-playback-dashboard-initial.png` |
+| 05 | [Plex log investigation](../images/plex/06-server-log-investigation.png) | `06-server-log-investigation.png` |
+| 06 | [Plex server network settings (pre-correction)](../images/plex/07-plex-network-settings.png) | `07-plex-network-settings.png` |
+| 07 | [IPv6 addresses in Plex container](../images/plex/08-ipv6-addresses.png) | `08-ipv6-addresses.png` |
+| 08 | [Container network IPv6 configuration](../images/plex/09-container-ipv6-settings.png) | `09-container-ipv6-settings.png` |
+| 09 | [Global IPv6 address still assigned](../images/plex/10-ipv6-still-present.png) | `10-ipv6-still-present.png` |
+| 10 | [Successful local Samsung playback](../images/plex/11-successful-local-playback.png) | `11-successful-local-playback.png` |
+| 11 | [AdGuard query log search](../images/plex/12-adguard-query-log.png) | `12-adguard-query-log.png` |
 
 ### Key screenshots
 
