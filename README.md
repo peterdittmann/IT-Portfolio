@@ -18,6 +18,8 @@ It's now running Debian containers, AdGuard Home, a Windows Server 2022 domain c
 
 One of the more useful problems came during the client setup: it could reach the domain controller, but normal DNS lookups were going to the ISP's IPv6 resolvers instead of my AD DNS server. Working through that made the difference between *network connectivity* and *service discovery* much clearer to me.
 
+I also deployed Plex in a separate LXC container with external media storage and documented a Samsung TV playback issue traced to a change in the client's DNS resolver.
+
 **What I've worked with:** Proxmox VE, Windows Server 2022, Windows 11 Pro, Active Directory Domain Services, DNS, PowerShell, VirtIO drivers, Debian Linux, and basic network troubleshooting.
 
 **Still to do:** domain-user sign-in, OUs and groups, Group Policy, shared-folder permissions, backup and restore testing, and more support scenarios.
